@@ -167,7 +167,7 @@ plot(nvals, outmat[,3])
 ## 4. The linear model I: Introduction and linear regression
 Nearly all the statistical models we will discuss in this text are forms of the linear model
 
-$y_i = \beta_0 + \Sigma_j x_i \beta_j + \epsilon_i$
+$y_i = \beta_0 + \Sigma_j x_{ij} \beta_j + \epsilon_i$
 
 The term $\beta_0$ (sometimes denoted $\alpha$) is the *intercept*, which in the context of a linear regression gives the value of the response variable $y$ when the predictor variable $x$ is zero. The $\beta_j$ are the coefficients ('slopes') for the predictor variables $x$, and the $\epsilon$ represent the *residuals*, the deviations of each data point from it's expected value based on the fitted model. In a regression, the residual is the perpendicular distance from the fitted regression line to each data point. The linear model assumes that the residuals (not the data!) are normally distributed, though minor deviations from this is not generally a problem.
 
@@ -191,12 +191,25 @@ In scatterplots, a useful change from the default is to make the *y*-axis labels
 
 The aim of regression analysis is to estimate the linear relationship between a response variable (or 'dependent variable') and one or more predictor variables ('independent variables'). The most common form of regression analysis is so-called ordinary least-square (OLS) regression, in which the regression parameters are estimated so as to minimize the square deviations of the data points from the estimated regression line. The deviations are termed *residuals*, and are assumed to be normally distributed.
 
-```{r, fig.height=4, fig.width=4}
+```{r}
 m = lm(y~x)
+```
+
+The object `m` now holds the fitted model. Let's extract the model coefficients and produce some plots of the residuals.
+
+```{r, fig.height=4, fig.width=8}
+
+cf = summary(m)$coef
+predvals = cf[1,1] + cf[2,1]*x
+
+par(mfrow=c(1,2))
+plot(x, y, las=1)
+abline(m)
+segments(x, y, x, predvals)
 hist(residuals(m), las=1)
 ```
 
-These residuals are fine, as is of course fully expected given that we simulated the data from the (gaussian) linear model. There are many other ways of assessing whether the model assumptions are met, see for example what happens if you call `plot(m)` after setting `par(mfrow=c(2,2))`. Notive that the `plot` function is *generic*, it produces a different result depending on what is fed to it. If we call `plot(x,y)` when both `x` and `y` are continuous variables, we get a scatterplot. If `x` is a factor, we get a boxplot.
+These residuals are fine, as is of course fully expected given that we simulated the data from the (gaussian) linear model. There are many other ways of assessing whether the model assumptions are met, see for example what happens if you call `plot(m)` after setting `par(mfrow=c(2,2))`. Notice that the `plot` function is *generic*, it produces a different result depending on what is fed to it. If we call `plot(x,y)` when both `x` and `y` are continuous variables, we get a scatterplot. If `x` is a factor, we get a boxplot.
 
 Let's now have a look at the results of our linear model fit.
 
@@ -215,6 +228,8 @@ The most important thing to notice here is that the sample size $n$ is in the de
 The $P$-value is the probability of observing the observed value of the test statistic given that the null hypothesis (here, a slope of zero) is true, or $P_{obs} = Pr(T>t_{obs}=t(X_{obs}|H_0))$. In other words, it represents the probability that we would have obtained our results by chance.
 
 Because the $P$-value is obtained by comparing our observed test statistic $t$ to its known distribution, and $t$ increases with sample size, it follows that when the sample size increases, anything will at some point be statistically significant. This is the reason why there are now increasing calls for abandoning $P$-values as the standard measure of statistical significance. That being said $P$-values do provide a 'quick and dirty' way of assessing statistical support, and can help guide our interpretation of the results. We will later return to alternative methods of evaluating statistical support, but for now we focus on the more important point: interpretation of the results needs to be done in light of the parameter estimates, their units, and their consequences within the context of the analysis/study.
+
+EXERCISE: Use the parameter estimates to draw (by hand) the scatterplot of *y* vs *x* with the regression line, indicating the location of the intercept and roughly the correct slope.
 
 EXERCISE: Use non-parametric bootstrapping to derive a standard error for the slope of the linear regression above. To do so, sample from the data set, fit the model, and save the sampling distribution for the slope of y on x.
 
@@ -300,7 +315,7 @@ $\beta'=\frac{\beta}{K}$
 
 Try to correct your estimated slopes in this way, and a produce a plot showing both the estimated and the corrected slope connected by line segments.
 
-```{r, fig.width=4, fig.height=4}
+```{r, fig.width=4, fig.height=4, echo=F}
 relerrors
 corrslope = slope_est/(1-relerrors)
 
@@ -313,9 +328,18 @@ points(errors, corrslope, pch=16)
 segments(errors, slope_est, errors, corrslope)
 ```
 
+### Exercise: fitting a linear regression to real data
+Choose any dataset you may have involving a continuous response variable and an continuous predictor. Fit a simple linear regression, interpret the results, produce a nice figure including the fitted regression line, and write simple methods and results presenting the analysis and results.
+
+If you don't have any data, use the dataset `bird_allometry` in the datasets folder. This dataset contains body mass and brain mass for males and females of different bird species. The scaling of brain size (or other body parts) with body size is referred to as the study of allometry, and you may want to read about these analyses before fitting your models. As a hint, the scaling of parts of a body with body size is expected to follow a power-law relationship on the form $y = ax^b$, which can be linearized through the logarithmic transformation $log(y) =log(a) + b \times log(x)$.
+
+```{r}
+birds = read.csv("datasets/allometry/bird_allometry.csv")
+head(birds)
+```
 
 ## The linear model II: One-way analysis of variance (ANOVA)
-When our predictor variables are categorical (factors), linear models are used to perform analysis of variance. The parameter estimation works in much the same way as in regression, except that instead of estimating regression slopes, we are estimating group effects. 
+When our predictor variables are categorical (factors), linear models are used to perform analyses of variance. The parameter estimation works in much the same way as in regression, except that instead of estimating regression slopes, we are estimating group effects.
 
 Let's simulate some data, fit a linear model, and perform an ANOVA.
 
@@ -407,7 +431,7 @@ popstats[,-1] = round(popstats[,-1], 2)
 kable(popstats)
 ```
 
-After exploring and summarizing the data, fit some linear models to estimate the slopes of one trait on another. Interpret the results. Do the analysis on both arithmetic and log scale. Choose traits that belong to the same vs. different functional groups, can you detect any patterns? Produce tidy figures that illustrate the results.
+After exploring and summarizing the data, fit some linear models to estimate the slopes of one trait on another. Interpret the results. Do the analysis on both arithmetic and log scale. Choose traits that belong to the same vs. different functional groups, can you detect any patterns? Produce tidy figures that illustrate the results. Hint: once you have produced a scatterplot, you can add more points (e.g. for a different variable) by using the `points()` function.
 
 ```{r, fig.height=4, fig.width=4, include=F, echo=F}
 plot(log(blossoms$LBW), log(blossoms$UBW), ylim=c(1,3.5), las=1,
@@ -428,19 +452,16 @@ m = lm(log(GSD)~log(LBW)*pop, data=blossoms)
 anova(m)
 ```
 
-
 ## The linear model III: two-way ANOVA
 Analyses of variance can also be performed with more than one factor variable. If we have two factors, we can talk about two-way ANOVA, and so on. A typical example from biology is when we have performed a factorial experiment, and want to assess the effects of each experimental factor and their potential interaction.
 
 With two factors, a full model can be formulated as `y ~ factor1 * factor2`. Recall that in `R`syntax, the * means both main effects and their interaction, while a : means only the interaction. A detectable interaction term in this model would indicate that the effect of factor 1 depends on the level of factor 2 (and *vice versa*). If we are analysing an experiment where we have manipulated both temperature and nitrogen supply, an interaction would mean that the effect of temperature depend on the nitrogen level.
 
-### Data exercise: factorial experiment
-
-
+### Data exercise: analysing a factorial experiment
 
 ## 6. The linear model IV: multiple regression
 
-Linear models are easily extendable to multiple predictor variables. If there are several continuous predictors, the analysis is called a multiple-regression analysis. Multiple regression has some very useful properties. For example, the parameter estimates represent the *marginal effect* of each predcitor, that is the effect of the predictor when all other variables in the model are held constant at their mean. This allows us to evaluate the independent effects of several, potnetially correlated, variables (asking for example which have the stronger effect on the response variable), or to 'control for' some nuisanse variables (say, sampling effort).
+Linear models are easily extendable to multiple predictor variables. If there are several continuous predictors, the analysis is called a multiple-regression analysis. Multiple regression has some very useful properties. For example, the parameter estimates represent the *marginal effect* of each predcitor, that is the effect of the predictor when all other variables in the model are held constant at their mean. This allows us to evaluate the independent effects of several, potentially correlated, variables (asking for example which have the stronger effect on the response variable), or to 'control for' some nuisance variables (say, sampling effort).
 
 ```{r}
 set.seed(187)
@@ -454,6 +475,7 @@ summary(m)
 
 coefs = summary(m)$coef
 ```
+
 First, note that the $r^2$ of the model is 0.961, which means that 96.1% of the variance in $y$ is explained. As before, we can see why this is the case by computing the variance in the predicted values $\hat{y}$, $$V(\hat{y}) = X\beta$$, and then divide this by the total variance in the response varible $V(y)$.
 
 ```{r}
@@ -521,7 +543,7 @@ Note that the model fit (e.g. the $r^2$) has not changed, but the parameter esti
 
 Second, the slopes now have units of standard deviations, i.e. they describe the change in $y$ per standard deviation change in each predictor. This shown directly that the predictor $x_2$ explains more variance in $y$ than does $x_1$. 
 
-Another useful trasnformation could be a natural log-transform, or similarly mean-scaling, which would give the slopes units of means, and allow interpreting the change in $y$ per percent change in $x$.
+Another useful transformation could be a natural log-transform, or similarly mean-scaling, which would give the slopes units of means, and allow interpreting the change in $y$ per percent change in $x$.
 
 ```{r}
 x1_m = (x1 - mean(x1))/mean(x1)
@@ -543,31 +565,35 @@ r2 = summary(m1)$r.squared
 1/(1-r2)
 ```
 
-This is very low, because the two predictors are not strongly correlated. Rules of thumb for what constitutes severe variance inflation range from $VIF>3$ to $VIF>10$. When this occurs, the parameter estimates becomes associated with excessive variance and are thus less reliable. In these cases it may be good to simplify the model by removing some of the correlated predictors, especially if there are several predictors that essentially represent the same property (e.g. multiple measures of body size). If the effects of the correlated predictors are of specific interest, it can also make sense to fit alternative models including each of the candidate predictor, and compare estimates. If the 'best model' is decired, the choice among the predictor may be based on model selection techniques.
+This is very low, because the two predictors are not strongly correlated. Rules of thumb for what constitutes severe variance inflation range from $VIF>3$ to $VIF>10$. When this occurs, the parameter estimates becomes associated with excessive variance and are thus less reliable. In these cases it may be good to simplify the model by removing some of the correlated predictors, especially if there are several predictors that essentially represent the same property (e.g. multiple measures of body size). If the effects of the correlated predictors are of specific interest, it can also make sense to fit alternative models including each of the candidate predictor, and compare estimates. If the 'best model' is desired, the choice among the predictor may be based on model selection techniques.
+
+### Data exercise: multiple regression and variable selection
+
 
 ## The linear model V: Analysis of Covariance (ANCOVA)
-In our last section on (simple) linear models, we will consider the case there the predictor variables include both continuous variables and factors. Such analysis are referred to as analyses of covariance.
+In our last section on (simple) linear models, we will consider the case there the predictor variables include both continuous variables and factors. Such analyses are referred to as analyses of covariance.
 
 An ANCOVA-analysis can be used to estimate and test for differences in slopes and intercepts between groups. This comes up often in ecology and evolution, because we often want e.g. to compare the slope of a regression among groups such as sexes, experimental treatments, or populations.
 
 In a simple case with one factor and one covariate, a full model including both main effects and their interaction (i.e. `y ~ factor * covariate` allows differences in both slopes and intercepts between the factor levels, while a simpler model without the interaction term (`y ~ factor + covariate`) allows only differences in intercepts.
 
-### DATA EXERCISE
-
+### DATA EXERCISE: Analysis of covariance
+Choose one of your own datasets, or either the `bird_allometry` dataset or the `blossoms` dataset. Formulate one or more hypotheses that can be tested in an ANCOVA. Perform the analysis, interpret the results, produce neat figures, write methods and results.
 
 ## 7. Generalized linear models I: Introduction
 
-Generalized linear models (GLMs) adds flexibility to the linear model by allowing deviations from the usual assumption of normally distributed residuals. Briefly, a GLM consists of the familiar linar predictor of a linear model (often denoted as $\eta$),
+Generalized linear models (GLMs) add flexibility to the linear model by allowing deviations from the usual assumption of normally distributed residuals. Briefly, a GLM consists of the familiar linear predictor of a linear model (often denoted as $\eta$),
 
 $\eta = \beta_0 + \Sigma_j x_i \beta_j + \epsilon_i$
+
 and a link function, $g$, that places the predictor on a Gaussian (normally-distributed) scale.
 
 $$y = g^{-1}(\eta)$$
-Before going into details about GLMs, we need to recall some basics about the most common error distributions used in data analyses.
+Before going into details about GLMs, we need to recall some basics about the most common error distributions used in biological data analyses.
 
-### Mean-variance relations for the binomial, and poission distributions
+### Mean-variance relations for the binomial and poission distributions
 
-The binomial distribution has two parameters, *n* and *p*, and summarizes a set of so-called Bernouli trials with two possible outcomes, yes (1) or no (0). When we have performed more than one trial, we can compute the proportion *p* of the *n* trials with a positive outcome.
+The binomial distribution has two parameters, *n* and *p*, and summarizes a set of so-called Bernoulli trials with two possible outcomes, yes (1) or no (0). When we have performed more than one trial, we can compute the proportion *p* of the *n* trials with a positive outcome.
 
 The theoretical variance of the binomial distribution is given by 
 
@@ -579,10 +605,9 @@ rbinom(3, 10, c(0.1, 0.5, 0.9))
 x = seq(from=0, to=1, by=0.01)
 v_b = x*(1-x) #Binomial variance
 plot(x, v_b, type="l", xlab="Probability", ylab="Theoretical variance", las=1)
-
 ```
 
-This is important to keep in mind, because it affects how we can compare the (proportional) variation of variables measures as proportions. If e.g. one population has a mean of 0.5, if will be expected to be much more variable than a second population with a mean of 0.1, just because there is less opportunity to vary. This is a now well-recognized problem e.g. in demography research, where the interest is often in comparing the extent of variation in life-history traits measured as proportions, such as germination or survival. One proposed solution is to scale the observed CV by the maximum based on the theoretical varaince, but a perhaps simpler approach is to transform the proportional data in a way that makes them approach a normal distribution.
+This is important to keep in mind, because it affects how we can compare the (proportional) variation of variables measures as proportions. If e.g. one population has a mean of 0.5, if will be expected to be much more variable than a second population with a mean of 0.1, just because there is less opportunity to vary. This is a now well-recognized problem e.g. in demography research, where the interest is often in comparing the extent of variation in life-history traits measured as proportions, such as germination or survival. One proposed solution is to scale the observed CV by the maximum based on the theoretical variance, but a perhaps simpler approach is to transform the proportional data in a way that makes them approach a normal distribution.
 
 One previously popular but now not recommended transformation is the so-called arcsin square-root transformation,
 
@@ -592,7 +617,7 @@ A more meaningful transformation is the logit or log odds transformation
 
 $logit(x) = log(\frac{x}{1-x})$
 
-In the following example we are using some functions. Note that when functions are given on a single line, we can skip the special curvy brackets (`{`).
+In the following example we are using some functions. This may be a good time to visit the Appendix introducing some basics on writing functions. Note that when functions are given on a single line, we can skip the special curvy brackets (`{`).
 
 ```{r, fig.width=6, fig.height=6}
 logit = function(x) log(x/(1-x))
@@ -869,11 +894,11 @@ Though Bayesian inference differs philosophically and technically from maximum-l
 Some 'purists' consider themself strictly 'frequentists' or strictly 'Bayesians', but most (the author included) are more than happy to leverage the strengths of specific methods in specific situations.
 
 ### Fitting a generalized linear mixed model with Bayesian inference
-To demonstrate the Bayesian model-fitting procedure, we will use the `Hmsc` package. `Hmsc` stands for Hiererachical Modelling of Species Communities, and implements a modelling framework developed primarily for analyses of multivariate community data. In a later section we will explore multivariate versions of `Hmsc`, but here we will use the package to fit a more standard mixed model. Another option for fitting such models is the `MCMCglmm` package.
+To demonstrate the Bayesian model-fitting procedure, we will use the `Hmsc` package. `Hmsc` stands for Hierarchical Modelling of Species Communities, and implements a modelling framework developed primarily for analyses of multivariate community data. In a later section we will explore multivariate versions of `Hmsc`, but here we will use the package to fit a more standard mixed model. Another option for fitting such models is the `MCMCglmm` package.
 
 The following examples are similar to those given in a vignette associated with the `Hmsc`package, which can be obtained by calling `vignette("vignette_1_univariate", package="Hmsc)`.
 
-As a first very simple example, we will fit a simple linear regression to simulated data. While the `lm` function constructs and fits the model in one go, the `Hmsc`package first constructs the model, and then performs model fitting (posterior sampling) in a second step. This is becasue posterior sampling can take a long time for complex data, and we want to be able to leave it to run e.g. overnight. For the current model though, model fitting is very quick.
+As a first very simple example, we will fit a simple linear regression to simulated data. While the `lm` function constructs and fits the model in one go, the `Hmsc`package first constructs the model, and then performs model fitting (posterior sampling) in a second step. This is because posterior sampling can take a long time for complex data, and we want to be able to leave it to run e.g. overnight. For the current model though, model fitting is very quick.
 
 ```{r, cache=F}
 library(Hmsc)
@@ -885,7 +910,8 @@ m1 = lm(y~x)
 m2 = Hmsc(Y = as.matrix(y), XData = data.frame(x), XFormula = ~x,
          distr="normal")
 
-m2 = sampleMcmc(m2, samples=1000, transient=1000, thin=1, verbose=F)
+m2 = sampleMcmc(m2, samples=1000, transient=1000, thin=1, 
+                nChains=2, verbose=F)
 
 summary(m1)$coef
 
@@ -899,7 +925,23 @@ The parameter estimates are very similar, though not identical. This is due to t
 plot(mpost$Beta)
 ```
 
+Here the posterior trace plot looks fine, there is no directional trend and the posterior distribution is nicely bell-shaped. We can also evaluate whether the chain has mixed (explored the parameter space) well by computing the effective sample size (which should be close to the number of posterior samples).
+
+```{r}
+effectiveSize(mpost$Beta)
+```
+
+Because we ran two independent MCMC chains, we can also assess whether they yielded similar results, which can be quantified by the so-called *potential scale reduction factor* or the Gelman-Rubin criterion. Values close to 1 means that the chains yielded similar results.
+
+```{r}
+gelman.diag(mpost$Beta, multivariate=F)$psrf
+```
+
+One advantage of Bayesian analyses is that, because we obtain the entire posterior distribution, we can carry uncertainty in parameter estimates forward to subsequent steps in the analysis. As a simple example, if we are using the parameter estimates of the simple linear model above to make predictions about the value of *y* for some values of *x*, we can obtain those predicts across the entire posterior disteribution, and thus construct e.g. a confidence interval for the predictions. Because 'confidence intervals' are well defined in standard maximum-likelihood statistics, Bayesian refer instead to 'credible intervals', often so-called 'highest posterior density' (HPD) intervals.
+
 ## 10. Multivariate stats, multivariate mixed models
+
+- Eigendecomposition and PCA. Matrix comparison?
 
 ## 11. Causal inference, path analysis and structural equation modelling
 
@@ -908,7 +950,7 @@ HMSC
 
 ## Other topics to cover somewhere
 Parametric vs. non-parametric methods
-Multicollinearity and VIF
+
 
 ## Appendix
 
