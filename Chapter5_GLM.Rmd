@@ -1,0 +1,228 @@
+---
+title: "Processing and Analysis of Biological Data"
+subtitle: "Generalized Linear Models (GLM)"
+author: "Øystein H. Opedal"
+date: "21 Oct 2022"
+output: pdf_document
+fig_caption: yes
+pandoc_args: ["--wrap=none"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+Generalized linear models (GLMs) add flexibility to the linear model by allowing deviations from the usual assumption of normally distributed residuals. Briefly, a GLM consists of the familiar linear predictor of a linear model (often denoted as $\eta$),
+
+$\eta = \beta_0 + \Sigma_j x_{ij} \beta_j + \epsilon_i$
+
+and a link function, $g$, that places the predictor on a Gaussian (normally-distributed) scale.
+
+$$y = g^{-1}(\eta)$$
+Before going into details about GLMs, we need to recall some basics about the most common error distributions used in biological data analyses.
+
+### Mean-variance relations for the binomial and poission distributions
+
+The binomial distribution has two parameters, *n* and *p*, and summarizes a set of so-called Bernoulli trials with two possible outcomes, yes (1) or no (0). When we have performed more than one trial, we can compute the proportion *p* of the *n* trials with a positive outcome.
+
+The theoretical variance of the binomial distribution is given by 
+
+$\sigma^2 = np(1-p)$
+
+```{r, fig.width=4, fig.height=4}
+rbinom(3, 10, c(0.1, 0.5, 0.9))
+
+x = seq(from=0, to=1, by=0.01)
+v_b = x*(1-x) #Binomial variance
+plot(x, v_b, type="l", xlab="Probability", ylab="Theoretical variance", las=1)
+```
+
+This is important to keep in mind, because it affects how we can compare the (proportional) variation of variables measures as proportions. If e.g. one population has a mean of 0.5, if will be expected to be much more variable than a second population with a mean of 0.1, just because there is less opportunity to vary. This is a now well-recognized problem e.g. in demography research, where the interest is often in comparing the extent of variation in life-history traits measured as proportions, such as germination or survival. One proposed solution is to scale the observed CV by the maximum based on the theoretical variance, but a perhaps simpler approach is to transform the proportional data in a way that makes them approach a normal distribution.
+
+One previously popular but now not recommended transformation is the so-called arcsin square-root transformation,
+
+$x' = \arcsin(\sqrt{x})$
+
+A more meaningful transformation is the logit or log odds transformation
+
+$logit(x) = log(\frac{x}{1-x})$
+
+In the following example we are using some functions. This may be a good time to visit the Appendix introducing some basics on writing functions. Note that when functions are given on a single line, we can skip the special curvy brackets (`{`).
+
+```{r, fig.width=6, fig.height=6}
+logit = function(x) log(x/(1-x))
+invlogit = function(x) 1/(1+exp(-x))
+
+x = runif(200)
+logit_x = logit(x)
+
+par(mfrow=c(2,2))
+hist(x, las=1)
+hist(logit_x, las=1)
+
+xx = seq(-5, 5, 0.01)
+plot(xx, invlogit(xx), type="l", las=1,
+     xlab="Logit (x)",
+     ylab="P")
+plot(x, invlogit(logit_x), las=1)
+```
+
+The logit transformation is the most common *link function* in a Generalized Linear Model with binomial errors. A similar alternative is the so-called probit link, which corresponds to the quantile distribution of the standard normal distribution (which is why we can use the `pnorm` function to compute the inverse).
+
+```{r, fig.height=4, fig.width=4}
+plot(xx, invlogit(xx), type="l", las=1,
+     xlab="Logit/Probit (x)",
+     ylab="P")
+lines(xx, pnorm(xx), lty=2)
+legend("topleft", legend=c("Logit", "Probit"),
+       lty=c(1,2))
+```
+
+A second very common data type in biology is count data, which occurs when we have counted something. In ecological studies we often count individuals or species, and in evolutionary biology we often count e.g. the number of offspring. For such data, the data distribution is often skewed, and the variance tends to increase with the mean. The Poisson distribution is tailored for such data.
+
+```{r, fig.height=4, fig.width=4}
+x = rpois(200, 3)
+hist(x, las=1)
+```
+
+The Poisson distribution has a single parameter $\lambda$ that determines both the mean and the variance. Thus, the variance increases linearly with the mean.
+
+The distribution of count data can sometimes by normalized through a log-transformation, and the log is indeed the link function of a Poisson regression model. The alternative method of log-transforming the data and then fitting a Gaussian model is problematic when there are zeros in the data. Adding a constant (e.g. 0.5 or 1) is sometimes an option, but is generally not recommended. A better option is to analyze the data in a GLM framework with Poisson-distributed errors and a log link function.
+
+## Logistic regression
+As we have already seen, a logistic regression (GLM with binomial errors) is well suited for analysing binary data (or proportions).
+
+```{r, fig.height=3.5, fig.width=10}
+x = rnorm(200, 10, 3)
+eta = -2 + 0.4*x + rnorm(200, 0, 2)
+p = invlogit(eta)
+y = rbinom(200, 1, p)
+
+par(mfrow=c(1,3))
+plot(x, eta, las=1)
+plot(x, p, las=1)
+plot(x, y, las=1)
+```
+
+Above, we simulated data by first formulating a linear predictor $\eta$, then transforming the predicted values into probabilities (through the inverse logit transformation), and finally binarizing the data by sampling from the binomial distribution. The last step adds additional uncertainty by accounting for the stochasticity of the observation process.
+
+```{r}
+m = glm(y~x, family=binomial(link="logit")) 
+summary(m)
+```
+
+The summary table includes, as always, a lot of information. The first thing to be aware is that when we are fitting a GLM, we obtain the parameter estimates on the link scale (here logit). Note that the parameter estimates are not too far from those we used to define the linear predictor $\eta$ when we simulated the data. These values are meaningful as such, and if the predictor variable has units of *mm*, the slopes have units of *log odds* $mm^{-1}$.
+
+To interpret the results biologically and to represent them in graphs, it can be useful to backtransform the predicted values to the probability scale. For example, we can ask how much the probability changes for a standard deviation increase in the predictor variable (though note that this is no longer a linear transform, so the consequences of increasing and decreasing the predictor by 1 standard deviation may be different).
+
+Recall from the previous section that a log odds of 0 corresponds to a probability of 0.5  ($log(\frac{0.5}{1-0.5})=log(1)=0$). If we solve the model equation (the linear predictor) for 0, we can thus obtain the predictor value corresponding to a probability of 0.5, which is often a relevant benchmark.
+
+$0 = \beta_0 + \beta_x$
+
+$\frac{-\beta_0}{\beta_x}=x$
+
+EXERCISE: Replicate the plot below. To produce a regression line, we define some new $x$-values that spans the data range along the $y$-axis, then obtain predicted values $\hat{y}$ (using the model coefficients), and finally transform these values to the probability scale to obtain the predicted probabilities $\hat{p}$.
+
+```{r}
+coefs = summary(m)$coef
+
+x_pred = seq(from=min(x), to=max(x), by=0.01)
+y_hat = coefs[1,1] + coefs[2,1]*x_pred
+p_hat = invlogit(y_hat)
+```
+
+Compute the value of $x$ corresponding to a probability of 0.5, and add lines to the plot to illustrate the results.
+
+```{r, fig.height=4, fig.width=4, echo=F}
+coefs = summary(m)$coef
+
+x_pred = seq(from=min(x), to=max(x), by=0.01)
+y_hat = coefs[1,1] + coefs[2,1]*x_pred
+p_hat = invlogit(y_hat)
+
+plot(x, y, las=1)
+lines(x_pred, p_hat)
+abline(h=0.5, lty=2)
+abline(v=-coefs[1,1]/coefs[2,1], lty=2)
+```
+
+The GLM summary table does not provide an $r^2$ value, because the normal $r^2$ does not work for logistic regression. There are however several 'Pseudo-$r^2$' available, typically based on comparing the likelihood of the model to that of a null model (a similar model but with only an intercept). The `MuMIn` package provides one such measure.
+
+```{r}
+library(MuMIn)
+r.squaredGLMM(m)
+```
+
+Another possibility for logistic regression is to compute the coefficient of discrimination, or Tjur's $D$. Indeed, there are several ways to evaluate the performance of a statistical model, and in a logistic regression it makes sense to ask how well the model discriminates between true positives and negatives in the data.
+
+The coefficent of discrimination is defined as $D=\bar{\hat{\pi_1}}-\bar{\hat{\pi_0}}$, and is computed by comparing the predicted probability for those data points that are successes or positives (1s; $\bar{\hat{\pi_1}}$) to the predicted probability for those data points that are failures or negatives (0s; $\bar{\hat{\pi_1}}$).
+
+```{r}
+y_hat = coefs[1,1] + coefs[2,1]*x
+p_hat = invlogit(y_hat)
+
+mean(p_hat[which(y==1)]) - mean(p_hat[which(y==0)])
+```
+
+Some final notes on fitting binomial GLM's. There are three ways to formulate these models in R. In the example above, the data were 0's and 1's, and we could specify the model simply as 
+
+`glm(y ~ x, family=binomial(link="logit"))`
+
+When each observation is based on more than one trial, we can formulate the model in two ways. The first is 
+
+`glm(y ~ x, family=binomial(link="logit"), weights=n)` 
+
+where `y` is the proportion of successes, and `n` is the number of trials. The second method is to fit a two-column matrix as response variable, where the first colomn is the number of successes, and the second column is the number of failures, i.e. `y = cbind(successes, failures)`.  The model formula is then
+
+`glm(cbind(successes, failures) ~ x, family=binomial(link="logit"))` 
+
+## Data exercise: seed germination
+The following data are from a study investigating patterns of seed dormancy in a plant. In this plant species, seeds needs to stay in dry conditions for a specific amount of time before they are ready to germinate, a process known as 'after-ripening'. once the seeds are 'ripe' they will normally germinate when exposed to favourable (moist) conditions.
+
+After different durations of after-ripening, the seeds were sown on moist soil and their germination success (proportion of seeds germinated) recorded. The seeds came from four different populations, and were weighed (in *mg*) prior to sowing.
+
+The variables in the data are as follows:
+
+- `pop` = Population ID
+- `mother` = Maternal plant ID
+- `crossID` = Unique cross identifier
+- `blocktray` = Sowing tray (experimental block)
+- `timetosowing` = Time in days from seed dispersal to watering
+- `MCseed` = Population-mean-centered seed mass in mg
+- `nseed` = Number of seeds sown
+- `germ2` = Proportion of seeds germinated
+
+Analyse the data to estimate the pattern of germination success in response to variation in the duration of after-ripening. Are the patterns similar in different populations? Are there other factors affecting germination success? Produce relevant summary statistics, parameter estimates, and graphs. 
+
+```{r}
+dat = read.csv("datasets/dormancy/dormancy.csv")
+names(dat)
+```
+
+As a suggested start, the following lines fit a simple model to data from one population using two different methods. Note that the model fit is the same (the log Likelihood of the two models is identical).
+
+```{r}
+subdat = dat[dat$pop=="CC",]
+
+germ = subdat$germ2 * subdat$nseed #Successes
+notgerm = subdat$nseed - germ #Failures
+
+mod1 = glm(cbind(germ, notgerm) ~ timetosowing, "binomial", data=subdat)
+mod2 = glm(germ2 ~ timetosowing, "binomial", weights=nseed, data=subdat)
+logLik(mod1) == logLik(mod2)
+```
+
+Can you use the fitted models to estimate the duration of after-ripening required for the expected germination rate to be 0.5?
+
+## 8. Generalized linear models II: Poisson and negative-binomial regression
+
+
+### Overdisperson
+
+
+### Negative binomial
+
+## 8. Generalized linear models III: Hurdle models
+

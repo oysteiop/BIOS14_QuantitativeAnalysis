@@ -2,8 +2,8 @@
 title: "Quantitative Analysis in Ecology and Evolution"
 subtitle: "The Linear Model 1: Linear regression"
 author: "Øystein H. Opedal"
-date: "8 Oct 2022"
-output: pdf_document
+date: "19 Oct 2022"
+output: html_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
 ---
@@ -17,7 +17,7 @@ Nearly all the statistical models we will discuss in this text are forms of the 
 
 $y_i = \beta_0 + \Sigma_j x_{ij} \beta_j + \epsilon_i$
 
-The term $\beta_0$ (sometimes denoted $\alpha$) is the *intercept*, which in the context of a linear regression gives the value of the response variable $y$ when the predictor variable $x$ is zero. The $\beta_j$ are the coefficients ('slopes') for the predictor variables $x$, and the $\epsilon$ represent the *residuals*, the deviations of each data point from it's expected value based on the fitted model. In a regression, the residual is the perpendicular distance from the fitted regression line to each data point. The linear model assumes that the residuals (not the data!) are normally distributed, though minor deviations from this is not generally a problem.
+The term $\beta_0$ (sometimes denoted $\alpha$) is the *intercept*, which in the context of a linear regression gives the value of the response variable $y$ when the predictor variable $x$ is zero. The $\beta_j$ are the coefficients ('slopes') for the predictor variables $x$, and the $\epsilon$ represent the *residuals*, the deviations of each data point from it's expected value based on the fitted model.The linear model assumes that the residuals (not the data!) are normally distributed, though minor deviations from this is not generally a problem.
 
 In the following, we will consider a series of examples of linear models fitted to simulated data. After simulating some values of the predictor $x$, we define $y$ as a function of $x$ and add some residual variance to the data (i.e. we simulate data from the same linear model that we will eventually fit to the data.) The advantage of starting from simulated data is that we know the true values of the parameters we will try to estimate. This is very useful when we want to check that our analysis is doing what we think it is doing.
 
@@ -93,7 +93,13 @@ est[i] = summary(m1)$coef[2,1]
 sd(est)
 ```
 
-Now, let us return to how we interpret the results of our linear regression. The slope of $y$ on $x$ is about 0.43. Although regression slopes are very often reported without any units, it is important to remember that the slopes in fact carry the units of both the response and predictor variables. In our example the response and predictor are both measured in *mm*, and the slope is therefore 0.43 *mm/mm*. When we report this in the text, we generally want also to report the standard error, i.e. $slope = 0.43 \pm{0.04}$ *mm/mm*. Thus, in our example, the response variable increases by 0.43 *mm* per *mm* increase in the predictor. The small standard error (relative to the slope estimate) directly indicates the strong statistical support.
+Now, let us return to how we interpret the results of our linear regression. The slope of $y$ on $x$ is about 0.43. Recall that the regression slope is given by the ratio of the covariance between y and x, and the variance in x, $Cov(y,x)/Var(x)$.
+
+```{r}
+cov(y,x)/var(x)
+```
+
+Although regression slopes are very often reported without any units, it is important to remember that the slopes in fact carry the units of both the response and predictor variables. In our example the response and predictor are both measured in *mm*, and the slope is therefore 0.43 *mm/mm*. When we report this in the text, we generally want also to report the standard error, i.e. $slope = 0.43 \pm{0.04}$ *mm/mm*. Thus, in our example, the response variable increases by 0.43 *mm* per *mm* increase in the predictor. The small standard error (relative to the slope estimate) directly indicates the strong statistical support.
 
 To facilitate further interpretation, we can also report the consequences of a realistic change in the predictor variable. Let's say that we want to know how much $y$ changes for a one standard deviation change in $x$.
 
@@ -129,7 +135,7 @@ coefs[2,1]^2*var(x)
 
 ### Exercise: How error in x- and y-variables affect the slope
 
-The standard linear model assumes that the predictor variable is measured wihtout error. When there is measurement error, this can lead to a bias in the estimated slope. Simulate data with measurement error in the predictor, and produce a plot showing the effect on the estimated slope.
+The standard linear model assumes that the predictor variable is measured without error. When there is measurement error, this can lead to a bias in the estimated slope. Simulate data with measurement error in the predictor, and produce a plot showing the effect on the estimated slope. As always with programming exercises, start by performing the necessary operations once, before building loops or functions. Here, you can start by simulating some data, and fit the model with no measurement error. Then, add some error, and see what happens to the slope estimate. 
 
 ```{r, fig.width=4, fig.height=4, echo=F}
 x = rnorm(500, 10, 2)
@@ -164,7 +170,6 @@ $\beta'=\frac{\beta}{K}$
 Try to correct your estimated slopes in this way, and a produce a plot showing both the estimated and the corrected slope connected by line segments.
 
 ```{r, fig.width=4, fig.height=4, echo=F}
-relerrors
 corrslope = slope_est/(1-relerrors)
 
 plot(errors, slope_est,
@@ -175,6 +180,8 @@ plot(errors, slope_est,
 points(errors, corrslope, pch=16)
 segments(errors, slope_est, errors, corrslope)
 ```
+
+What about error in the response variable? Repeat the exercise with error in *y* instead of error in *x*. What happens?
 
 ### Exercise: fitting a linear regression to real data
 Choose any dataset you may have involving a continuous response variable and an continuous predictor. Fit a simple linear regression, interpret the results, produce a nice figure including the fitted regression line, and write simple methods and results presenting the analysis and results.

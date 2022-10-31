@@ -1,0 +1,156 @@
+---
+title: "Processing and Analysis of Biological Data"
+subtitle: "A primer of multivariate analysis"
+author: "Øystein H. Opedal"
+date: "29 Oct 2022"
+output: pdf_document
+fig_caption: yes
+pandoc_args: ["--wrap=none"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+Biological data are very often multivariate, in the sense that we are dealing with potentially large sets of correlated variables. Some times the patterns of covariation among variables is the focus of the investigation, and other times we may have taken several measurements that describe similar aspects of the biology in question. In any case, we very often have to deal with analyses of multiple variables. Note that when we refer to multivariate analyses, we mean analyses where there is more than one response variable. Thus, a multiple regression is normally considered a univariate analysis even though there are multiple correlated predictor variables.
+
+## Variance matrices and eigendecomposition
+
+Multivariate data can be summarized as *variance matrices*, which are symmetrical matrices with variances on the diagonal and covariances on the off-diagonals. We will work with the following example variance matrix $\textbf{CM}$.
+
+```{r}
+cm = matrix(c(0.7, 0.2, -0.3,
+              0.2, 1.2, 0.4,
+              -0.3, 0.4, 0.6), 
+              nrow=3)
+cm
+```
+
+EXERCISE: One way to confirm that a matrix is symmetrical is to show that it is identical to it´s transpose ($\textbf{A}=\textbf{A}^T$). Confirm that $\textbf{CM}$ is symmetrical.
+
+```{r, echo=T}
+cm == t(cm)
+```
+
+EXERCISE: Translate the covariance matrix into a correlation matrix.
+
+We can use a variance matrix to simulate data from the multivariate normal distribution $MVN(\bar{x}, \Sigma)$, where $\Sigma$ is a variance matrix.
+
+```{r}
+library(MASS)
+
+X = data.frame(mvrnorm(200, mu=c(5,3,7), Sigma=cm))
+colnames(X) = c("z1", "z2", "z3")
+head(X)
+```
+
+Variance matrices have several useful properties for multivariate analysis. A common operation is a so-called eigendecomposition (or spectral decomposition).
+
+A vector $v$ is an eigenvector of the matrix $\textbf{A}$ if it satisfies the condition
+
+$\textbf{Av}=\lambda\textbf{v}$,
+
+where $\lambda$ is an eigenvalue of $\textbf{A}$. From this follows also the relation
+
+$\textbf{A}=\textbf{Q} \Lambda \textbf{Q}^{-1}$.
+
+where $\textbf{Q}$ is a matrix with the eigenvectors in columns, and $\Lambda$ is a square matrix with the eigenvalues on the diagonal.
+
+Biologically, the eigen analysis allows us to 'rotate' the variation in the data (say, in the multivariate phenotype of an organism) so that the first 'trait' (leading eigenvector) represents the multivariate direction of most variation. Often, this can be interpreted roughly as the size of the organism. The subsequent eigenvectors represent other axes of variation, that could e.g. represent shape. The subsequent eigenvectors are *orthogonal*, so that e.g. the second eigenvector is perpendicular to the first.
+
+In `R`, the function `eigen` performs the eigendecomposition and returns the eigenvectors and corresponding eigenvalues.
+
+```{r}
+eigen(cm)
+```
+The eigenvalues represent the amount of variance associated with each eigenvector (given in columns). We can thus compute the proportion of variance associated with each eigenvector as $\lambda_i/\sum\lambda$.
+
+Before continuing, we need to recall the rules for matrix multiplication. There are several forms of matrix multiplication, but the 'normal' matrix multiplication requires that the number of columns in the first matrix equals the number of rows in the second matrix, and the resulting matrix will have the same number of rows as the first matrix, and the same number of columns as the second matrix. If we multiply a matrix of dimensions $m \times n$ with one of dimensions $n \times l$, we get a matrix of dimensions $m \times l$. The matrix multiplication operator in `R` is `%*%`.
+
+EXERCISE: Compute the proportion of variance associated with each eigenvector of $\textbf{CM}$.
+
+```{r, echo=F}
+eigen(cm)$values/sum(eigen(cm)$values)
+```
+
+EXERCISE: Confirm that the eigenvectors are of unit length (length = 1) and that the angle between them is 90 degrees.
+
+Recall that the length of a vector is the square root of the sum of the vector elements, and the angle between two vectors $u_1$ and $u_2$ is $\frac{180}{\pi}cos^{-1}(u_1u_2)$.
+
+Length of the eigenvectors
+
+```{r, echo=F}
+apply(eigen(cm)$vectors, 2, function(x) sqrt(sum(x^2)))
+```
+
+Angle between first and second eigenvector
+
+```{r, echo=F}
+180/pi * acos(t(eigen(cm)$vectors[,1]) %*% eigen(cm)$vectors[,2])
+```
+
+
+EXERCISE: Reconstruct the matrix $\textbf{CM}$ from the eigenvalues and eigenvectors.   
+
+```{r, echo=F}
+cm
+eigen(cm)$vectors %*% diag(eigen(cm)$values) %*% solve(eigen(cm)$vectors)
+```
+
+```{r, include=F}
+eigen(cm)$vectors[1:2, 1:2] %*% 
+diag(eigen(cm)$values)[1:2, 1:2] %*% 
+solve(eigen(cm)$vectors)[1:2, 1:2]
+```
+
+
+## Principal Component Analysis
+
+Eigenanalysis is a core component of principal component analysis. In it's simplest form, the principal components are the same as the eigenvectors. Let us derive some new traits along the eigenvectors of $\textbf{CM}$.
+
+```{r}
+dim(as.matrix(X))
+dim(as.matrix(eigen(cm)$vectors[,1]))
+
+t1 = as.matrix(X) %*% eigen(cm)$vectors[,1]
+t2 = as.matrix(X) %*% eigen(cm)$vectors[,2]
+t3 = as.matrix(X) %*% eigen(cm)$vectors[,3]
+
+c(var(X[,1]), var(X[,2]), var(X[,3]))
+c(var(t1), var(t2), var(t3))
+```
+
+Notice that the variances of new traits decreases from the first to the third trait, which was not the case for the original traits. However, the total variance stays the same (because we have just reorganized the variation).
+
+```{r}
+var(t1) + var(t2) + var(t3)
+var(X[,1]) + var(X[,2]) + var(X[,3])
+```
+
+The eigenvectors are *orthogonal*, i.e. they are not correlated with each other.
+
+A very similar operation is performed by several `R` packages for principal component analysis, e.g. `prcomp`. The principal components are not exactly the same as defining traits along the eigenvectors, but are subject to some further rotation. However, the principal components will be strongly correlated with the traits defined along the eigenvectors.
+
+```{r}
+pca = princomp(X)
+summary(pca)
+```
+
+The proportion of variance explained by each principal component is computed as the variance of each principal component divided by the total, which is basically equal to the corresponding eigenvalue divided by the sum of the eigenvalues, i.e. $\lambda_i/\sum\lambda$.
+
+```{r}
+pca$sdev^2/sum(pca$sdev^2)
+eigen(cm)$values/sum(eigen(cm)$values)
+```
+
+The small difference is again due to how the principal components are calculated, but biologically the interpretation is the same. A PCA can be illustrated by a biplot.
+
+```{r}
+biplot(pca, col=c("grey", "black"), cex=c(.5, 1))
+```
+
+## Principal component regression
+
+And the chong thing
