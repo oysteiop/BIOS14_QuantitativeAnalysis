@@ -2,8 +2,8 @@
 title: "Quantitative Analysis in Ecology and Evolution"
 subtitle: "Appendix"
 author: "Øystein H. Opedal"
-date: "19 Oct 2022"
-output: html_document
+date: "1 Nov 2022"
+output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
 ---

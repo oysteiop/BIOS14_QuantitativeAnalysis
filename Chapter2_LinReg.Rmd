@@ -1,9 +1,9 @@
 ---
-title: "Quantitative Analysis in Ecology and Evolution"
+title: "Processing and Analysis of Biological Data"
 subtitle: "The Linear Model 1: Linear regression"
 author: "Øystein H. Opedal"
-date: "19 Oct 2022"
-output: html_document
+date: "1 Nov 2022"
+output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
 ---
@@ -107,9 +107,9 @@ To facilitate further interpretation, we can also report the consequences of a r
 coefs = summary(m)$coef
 (coefs[2,1]*(mean(x) + sd(x))) - (coefs[2,1]*mean(x))
 ```
-Here, we could write in the results section that 'In the study population, corolla width increased by 0.80 *mm* per standard deviation increase in corolla diameter'.
+Here, we could write in the results section that 'In the study population, leaf width increased by 0.80 *mm* per standard deviation increase in leaf length'.
 
-As a special case, a regression where both the response and predictor variable are natural log-transformed will have a slope interpretable as an *elasticity*, which describes the % change in the response per % change in the predictor. THis is another example of the nice proportional prorerties of the natural log.
+As a special case, a regression where both the response and predictor variable are natural log-transformed will have a slope interpretable as an *elasticity*, which describes the % change in the response per % change in the predictor. This is another example of the nice proportional properties of the natural log.
 
 Another important parameter in the summary table is the coefficient of determination, the $r^2$. In our simple univariate regression, the $r^2$ is simply the square of the Pearson correlation coefficient $r$ between the response and predictor.
 
@@ -118,7 +118,7 @@ cor(x,y)^2
 ```
 
 The $r^2$ of our model is 0.431, which means that 43.1% of the variance in $y$ is explained by $x$. In general, it is often nice to report the $r^2$ directly as a percent (i.e. $\times 100$). 
-To understand why the $r^2$ gives the % variance explained, note that the $r^2$ can be computed as the variance in the predicted values $\hat{y}$, $$V(\hat{y}) = X\beta$$ divided by the total variance in the response varible $V(y)$.
+To understand why the $r^2$ gives the % variance explained, note that the $r^2$ can be computed as the variance in the predicted values $\hat{y}$, $$V(\hat{y}) = V(X\beta)$$ divided by the total variance in the response variable $V(y)$.
 
 ```{r}
 y_hat = coefs[1,1] + coefs[2,1]*x
@@ -132,6 +132,17 @@ Another way to compute the variance explained by a predictor is $V(x) = \beta_x^
 coefs[2,1]^2*var(x)
 ```
 
+Finally, we can use the fitted model to make predictions for new values of $x$, which can be used e.g. to construct a regression line.
+
+```{r, fig.height=4, fig.width=4}
+newx = seq(min(x), max(x), length.out=200)
+predy = coefs[1,1] + coefs[2,1]*newx
+
+plot(x, y, las=1, 
+     xlab="Leaf length (mm)", 
+     ylab="Leaf width (mm)")
+lines(newx, predy)
+```
 
 ### Exercise: How error in x- and y-variables affect the slope
 
