@@ -2,7 +2,7 @@
 title: "Processing and Analysis of Biological Data"
 subtitle: "The Linear Model II: Analysis of Variance"
 author: "Øystein H. Opedal"
-date: "1 Nov 2022"
+date: "8 Nov 2022"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -110,82 +110,53 @@ Analyses of variance can also be performed with more than one factor variable. I
 With two factors, a full model can be formulated as `y ~ factor1 * factor2`. Recall that in `R`syntax, the * means both main effects and their interaction, while a : means only the interaction. A detectable interaction term in this model would indicate that the effect of factor 1 depends on the level of factor 2 (and *vice versa*). If we are analysing an experiment where we have manipulated both temperature and nitrogen supply, an interaction would mean that the effect of temperature depend on the nitrogen level.
 
 ### Data exercise: analysing a factorial experiment
+The following data are from an experiment where female butterflies reared on two different host plants were allowed to oviposit on the same two host plants. The data include developmental time for the larvae, the adult weight, and the growth rate of the larvae.
+
+Analyse the data to assess effects of maternal vs. larval host plant on one or more response variable. Interpret the results and produce a nice plot to illustrate.
+
 
 ```{r}
 dat = read.csv("datasets/butterflies.csv")
 names(dat)
 ```
+```{r, fig.height=4, fig.width=4, echo=T}
+dat$MaternalHost = paste0(dat$MaternalHost, "M")
+dat$LarvalHost = paste0(dat$LarvalHost, "L")
 
+means = tapply(dat$DevelopmentTime, list(dat$MaternalHost, dat$LarvalHost), mean)
+ses = tapply(dat$DevelopmentTime, 
+       list(dat$MaternalHost, dat$LarvalHost), 
+       function(x) sd(x)/sqrt(sum(!is.na(x))))
 
-### Data exercise: Interpreting linear-model analyses
+means
+ses
 
-Flowers are integrated phenotypes, which means that the different parts of the flowers are generally covarying with each other so that large flowers have e.g. both longer petals and longer sepals. Evolutionary botanists are interested in these patterns of covariation among floral parts, because they can affect for example the fit of flowers to their pollinators. We will work with a dataset on flower measurements from 9 natural populations in Costa Rica.
+plot(c(0.97, 1.03), means[1,], ylim=c(18, 40), xlim=c(0.8, 2.2),
+     xlab="Larval host", 
+     ylab="Developmental time (days)",
+     xaxt="n", las=1, pch=c(21,16), col="white")
+axis(1, 1:2, labels=c("Barbarea", "Berteroa"))
 
-The traits are
+arrows(c(0.97,1.03), means[1,]-ses[1,], c(0.97,1.03), 
+       means[1,]+ses[1,], length=0.05, angle=90, code=3)
+arrows(c(1.97,2.03), means[2,]-ses[2,], c(1.97,2.03), 
+       means[2,]+ses[2,], length=0.05, angle=90, code=3)
 
-- ASD: anther-stigma distance ($mm$)
-- GAD: gland-anther distance ($mm$)
-- GSD: gland-stigma distance ($mm$)
-- LBL: lower bract length ($mm$)
-- LBW: lower bract width ($mm$)
-- UBL: upper bract length ($mm$)
-- UBW: upper bract width ($mm$)
-- GW: gland width ($mm$)
-- GA: gland area ($mm^2$)
+segments(0.97, means[1,1], 1.97, means[2,1], lty=2)
+segments(1.03, means[1,2], 2.03, means[2,2])
 
-The traits have known or assumed functions. Anther-stigma distance is important for the ability of self-pollination, gland-anther distance and gland-stigmas distance affect the fit of flowers to pollinators, the upper and lower bracts are advertisements (think petals in other flowers), and the gland produces the the reward for pollinators.
+points(c(0.97, 1.03), means[1,], pch=c(21,16), bg="white")
+points(c(1.97, 2.03), means[2,], pch=c(21, 16), bg="white")
 
-The first step in any data analysis in always to explore the data. Make a series of histograms and plots. How are the data distributed? Are there any problematic outliers? How are patterns of trait correlations? Which traits are (proportionally) more variable?
-
-What about differences between populations? Are any of the traits detectably different? By 'detectably' I mean statisticaly significant, but because the 's word' is so often misused, I find it safer to say detectably. At the very least, say 'statistically significant', to make clear that you do not (necessarily) imply any biological significance.
-
-To get started, the following lines reads the data.
+legend("topleft", c("Maternal host", "Barbarea", "Berteroa"), 
+       bty="n", pch=c(NA,21,16))
+```
 
 ```{r}
-blossoms = read.csv("datasets/blossoms/blossoms.csv")
-names(blossoms)
-```
-
-To summarize the data per population, the `apply` family of functions are useful. To call a function for each level of a factor, such as computing the mean for each population, we can use `tapply`.
-
-```{r}
-tapply(blossoms$UBW, blossoms$pop, mean, na.rm=T)
-```
-
-A couple of packages are also very useful for producing complete summaries. I use `plyr` and `reshape2`.  You could also consider learning some of the more modern things such as `tidyverse`.
- 
-```{r}
-library(plyr)
-library(knitr)
-popstats = ddply(blossoms, .(pop), summarize,
-                 LBWm = mean(LBW, na.rm=T),
-                 LBWsd = sd(LBW, na.rm=T),
-                 GSDm = mean(GSD, na.rm=T),
-                 GSDsd = sd(GSD, na.rm=T),
-                 ASDm = mean(ASD, na.rm=T),
-                 ASDsd = sd(ASD, na.rm=T))
-popstats[,-1] = round(popstats[,-1], 2)
-kable(popstats)
-```
-
-After exploring and summarizing the data, fit some linear models to estimate the slopes of one trait on another. Interpret the results. Do the analysis on both arithmetic and log scale. Choose traits that belong to the same vs. different functional groups, can you detect any patterns? Produce tidy figures that illustrate the results. Hint: once you have produced a scatterplot, you can add more points (e.g. for a different variable) by using the `points()` function.
-
-```{r, fig.height=4, fig.width=4, include=F, echo=F}
-plot(log(blossoms$LBW), log(blossoms$UBW), ylim=c(1,3.5), las=1,
-     xlab="Lower bract width( log mm)",
-     ylab="UBW/GSD (log mm)")
-points(log(blossoms$LBW), log(blossoms$GSD), pch=16)
-```
-
-```{r, include=F, echo=F}
-mUBW = lm(log(UBW)~pop, data=blossoms)
-mGSD = lm(log(GSD)~pop, data=blossoms)
-anova(mUBW)
-anova(mGSD)
-```
-
-```{r, include=F, echo=F}
-m = lm(log(GSD)~log(LBW)*pop, data=blossoms)
+names(dat)
+m = lm(DevelopmentTime~MaternalHost*LarvalHost, data=dat)
 anova(m)
+summary(m)
 ```
+
 
