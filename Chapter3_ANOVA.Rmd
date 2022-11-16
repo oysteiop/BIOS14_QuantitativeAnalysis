@@ -131,22 +131,22 @@ ses = tapply(dat$DevelopmentTime,
 means
 ses
 
-plot(c(0.97, 1.03), means[1,], ylim=c(18, 40), xlim=c(0.8, 2.2),
+plot(c(0.97, 1.03), means[,1], ylim=c(18, 40), xlim=c(0.8, 2.2),
      xlab="Larval host", 
      ylab="Developmental time (days)",
      xaxt="n", las=1, pch=c(21,16), col="white")
 axis(1, 1:2, labels=c("Barbarea", "Berteroa"))
 
-arrows(c(0.97,1.03), means[1,]-ses[1,], c(0.97,1.03), 
-       means[1,]+ses[1,], length=0.05, angle=90, code=3)
-arrows(c(1.97,2.03), means[2,]-ses[2,], c(1.97,2.03), 
-       means[2,]+ses[2,], length=0.05, angle=90, code=3)
+arrows(c(0.97,1.03), means[,1]-ses[,1], c(0.97,1.03), 
+       means[,1]+ses[,1], length=0.05, angle=90, code=3)
+arrows(c(1.97,2.03), means[,2]-ses[,2], c(1.97,2.03), 
+       means[,2]+ses[,2], length=0.05, angle=90, code=3)
 
-segments(0.97, means[1,1], 1.97, means[2,1], lty=2)
-segments(1.03, means[1,2], 2.03, means[2,2])
+segments(0.97, means[1,1], 1.97, means[1,2], lty=2)
+segments(1.03, means[2,1], 2.03, means[2,2])
 
-points(c(0.97, 1.03), means[1,], pch=c(21,16), bg="white")
-points(c(1.97, 2.03), means[2,], pch=c(21, 16), bg="white")
+points(c(0.97, 1.03), means[,1], pch=c(21,16), bg="white")
+points(c(1.97, 2.03), means[,2], pch=c(21, 16), bg="white")
 
 legend("topleft", c("Maternal host", "Barbarea", "Berteroa"), 
        bty="n", pch=c(NA,21,16))
@@ -159,4 +159,16 @@ anova(m)
 summary(m)
 ```
 
+To interpret the results, we look first at the ANOVA table. There are detectable effects of both larval and maternal host plants, with more variance explained by larval host than maternal host (based on the larger sum of squares for larval host). Furthermore, the effects of larval and maternal host are not independent, as indicated by a detectable interaction. The variance explained by the interaction term is limited though, as we can also see from the graph. 
+
+To quantify the effect size, it is useful to first compute the mean development time for each larval and maternal host plant.
+
+```{r}
+colMeans(means)
+rowMeans(means)
+```
+
+Based on this, we could write the results like this:
+
+The larvae developed 22.1% faster when grown on Barbarea than when grown on Berteroa (mean development time = 22.6 and 29.0 days, respectively, $F_{1,283}=765.21, P<0.001$, Fig. 1). Larvae whose mothers were grown on Barbarea developed 10.7% faster (mean development time = 24.3 and 27.3 days, respectively, $F_{1,283}=177.90, P<0.001$). The difference in development time between larval host plants was slightly larger when the mother was grown on Berteroa than when the mother was grown in Barbarea (24.2% vs. 19.6% reduction in developmental time on Barbarea, respectively).
 

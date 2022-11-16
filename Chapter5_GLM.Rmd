@@ -2,7 +2,7 @@
 title: "Processing and Analysis of Biological Data"
 subtitle: "Generalized Linear Models (GLM)"
 author: "Øystein H. Opedal"
-date: "21 Oct 2022"
+date: "14 Nov 2022"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -32,7 +32,7 @@ The theoretical variance of the binomial distribution is given by
 $\sigma^2 = np(1-p)$
 
 ```{r, fig.width=4, fig.height=4}
-rbinom(3, 10, c(0.1, 0.5, 0.9))
+#rbinom(3, 10, c(0.1, 0.5, 0.9))
 
 x = seq(from=0, to=1, by=0.01)
 v_b = x*(1-x) #Binomial variance
@@ -79,17 +79,6 @@ lines(xx, pnorm(xx), lty=2)
 legend("topleft", legend=c("Logit", "Probit"),
        lty=c(1,2))
 ```
-
-A second very common data type in biology is count data, which occurs when we have counted something. In ecological studies we often count individuals or species, and in evolutionary biology we often count e.g. the number of offspring. For such data, the data distribution is often skewed, and the variance tends to increase with the mean. The Poisson distribution is tailored for such data.
-
-```{r, fig.height=4, fig.width=4}
-x = rpois(200, 3)
-hist(x, las=1)
-```
-
-The Poisson distribution has a single parameter $\lambda$ that determines both the mean and the variance. Thus, the variance increases linearly with the mean.
-
-The distribution of count data can sometimes by normalized through a log-transformation, and the log is indeed the link function of a Poisson regression model. The alternative method of log-transforming the data and then fitting a Gaussian model is problematic when there are zeros in the data. Adding a constant (e.g. 0.5 or 1) is sometimes an option, but is generally not recommended. A better option is to analyze the data in a GLM framework with Poisson-distributed errors and a log link function.
 
 ## Logistic regression
 As we have already seen, a logistic regression (GLM with binomial errors) is well suited for analysing binary data (or proportions).
@@ -218,11 +207,63 @@ Can you use the fitted models to estimate the duration of after-ripening require
 
 ## 8. Generalized linear models II: Poisson and negative-binomial regression
 
+A second very common data type in biology is count data, which occurs when we have counted something. In ecological studies we often count individuals or species, and in evolutionary biology we often count e.g. the number of offspring. For such data, the data distribution is often skewed, and the variance tends to increase with the mean. The Poisson distribution is tailored for such data.
 
-### Overdisperson
+```{r, fig.height=4, fig.width=4}
+x = rpois(200, 3)
+hist(x, las=1)
+```
+
+The Poisson distribution has a single parameter $\lambda$ that determines both the mean and the variance. Thus, the variance increases linearly with the mean.
+
+The distribution of count data can sometimes by normalized through a log-transformation, and the log is indeed the link function of a Poisson regression model. The alternative method of log-transforming the data and then fitting a Gaussian model is problematic when there are zeros in the data. Adding a constant (e.g. 0.5 or 1) is sometimes an option, but is generally not recommended. A better option is to analyze the data in a GLM framework with Poisson-distributed errors and a log link function.
+
+```{r}
+x = rnorm(200, 10, 3)
+eta = -2 + 0.2*x
+y = ceiling(exp(eta + rpois(200, 0.3)))
+
+par(mfrow=c(1,2))
+plot(x, eta, las=1)
+plot(x, y, las=1)
+```
+
+```{r}
+m = glm(y~x, family="poisson")
+summary(m)
+```
+
+When interpreting Poisson regressions, there are several things to keep in mind. First, as in all GLMs, the parameters are reported on the link scale, here log. Recall that the link scale has useful proportional properties, so that the slope can be interpreted roughly as the proportional change in y per unit change in x.
+
+Second, recall that the Poisson distribution has a single parameter $\lambda$ derermining both the mean and the variance. In real count data the variance often increase disproportionally compared to the mean, a phenomenon called *overdispersion*. Biologically, this occurs because we tend to observe multiple entities together. For example, in a survey of common eiders, we will often see either no eiders, or a lot of eiders.
+
+We can quantify overdispersion in the data based on the fitted model by calculating the ratio of the residual deviance to the residual degrees of freedom. In the model above there is no serious overdispersion, because the residual deviance is only a little larger than the residual degrees of freedom. Let us construct an example with more serious overdispersion.
 
 
-### Negative binomial
+```{r}
+x = rnorm(200, 10, 3)
+eta = -2 + 0.2*x
+y = ceiling(exp(eta + rnbinom(200, 1, mu=.8)))
+
+par(mfrow=c(1,2))
+plot(x, eta, las=1)
+plot(x, y, las=1)
+```
+
+```{r}
+m = glm(y~x, family="poisson")
+summary(m)
+```
+
+Here the overdispersion is serious, and we can not trust the model estimates. In this case, we need an alternative link function that allows the variance to increase more than the mean. The negative binomial distribution is a good option.
+
+```{r}
+library(MASS)
+m = glm.nb(y~x)
+summary(m)
+```
+
+Note that the parameter estimates are similar but the estimated standard error is much higher.
 
 ## 8. Generalized linear models III: Hurdle models
 
