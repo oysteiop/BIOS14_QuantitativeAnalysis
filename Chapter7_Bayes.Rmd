@@ -1,0 +1,86 @@
+---
+title: "Processing and Analysis of Biological Data"
+subtitle: "Linear Mixed Models (LMM)"
+author: "Øystein H. Opedal"
+date: "16 Nov 2022"
+output: pdf_document
+fig_caption: yes
+pandoc_args: ["--wrap=none"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## 9. Bayesian methods
+All the modelling methods we have discussed so far are fitted by maximimum likelihood methods. This is not the only method for fitting models to data though. In this section we will discuss the philosophy of Bayesian statistics, and some examples of how models can be fitted using Bayesian inference.
+
+Put simply, while hypothesis testing by 'frequentists' is based on estimating the most likely value of parameters, their uncertainty, and $P$-values, the Bayesian philosophy is explicitly to consider the distribution of plausible parameter values. Furthermore, Bayesian inference involves the formulation of a so-called *prior distribution* that describes our prior belief about which parameter estimates are likely to occur.
+
+At the core of Bayesian inference sit's the simple Bayes theorem or Bayes rule, which states
+
+$P(A|B)=\frac{P(B|A)P(A)}{P(B)}$
+
+Here $A$ and $B$ are events, and the $P(A)$ and $P(B)$ representes the prior belief about the events.
+
+In the context of model fitting, we replace the events $A$ and $B$ with the model parameters $\theta$ and the observed data $S$. 
+
+$P(\theta|S)=\frac{P(S|\theta)P(\theta)}{\int{P(S|\theta)P(\theta) d\theta}}$
+
+where $P(\theta)$ is the prior for the parameters and $P(S|\theta)$ is the likelihood function.
+
+Bayesian model fitting occurs in an iterative process, normally the Monte Carlo Markov Chain (MCMC). A simple method for model fitting by MCMC is the Metropolis-Hastings updating. Briefly, during each iteration a small modification is done to the current value of a parameter, and if this value increases the likelihood of the model (after taking into account the prior for the parameter), the suggestion is accepted and the chain makes the next suggestion based on this updated value. If the suggestion does not improve the likelihood, it is discarded. Through this iterative process, the chain eventually reaches a stable distribution of plausible parameter values, the *posterior distribution*. For complex models this method is generally not feasible, but more sophosticated updating procedures are used that essentially performs the same task (e.g. Gibbs sampling).
+
+The parameter estimates and their uncertainty can be summarized for example as the posterior mean and a credible interval around the mean. Credible intervals in Bayesian analysis corresponds to confidence intervals in maximum-likelihood analses, but are termed differently due to the difference in how they are obtained.
+
+Instead of computing summaries based on the posterior distribution, we can perform downstream analyses for each posterior sample, thus carrying the uncertainty forward and subsequently obtain e.g. posterior means and credible intervals after all analysis steps are complete.
+
+Though Bayesian inference differs philosophically and technically from maximum-likelihood analysis, many applications are ultimately rather similar. For example, we can use Bayesian inference to fit linear models using (nearly) non-informative priors, and obtain nearly identical parameter estimates to those obtained by the `lm` function. Statistical support can be evaluated as e.g. the posterior support, i.e. the proportion of posterior samples that are greater than zero.
+
+Some 'purists' consider themself strictly 'frequentists' or strictly 'Bayesians', but most (the author included) are more than happy to leverage the strengths of specific methods in specific situations.
+
+### Fitting a generalized linear mixed model with Bayesian inference
+To demonstrate the Bayesian model-fitting procedure, we will use the `Hmsc` package. `Hmsc` stands for Hierarchical Modelling of Species Communities, and implements a modelling framework developed primarily for analyses of multivariate community data. In a later section we will explore multivariate versions of `Hmsc`, but here we will use the package to fit a more standard mixed model. Another option for fitting such models is the `MCMCglmm` package.
+
+The following examples are similar to those given in a vignette associated with the `Hmsc`package, which can be obtained by calling `vignette("vignette_1_univariate", package="Hmsc)`.
+
+As a first very simple example, we will fit a simple linear regression to simulated data. While the `lm` function constructs and fits the model in one go, the `Hmsc`package first constructs the model, and then performs model fitting (posterior sampling) in a second step. This is because posterior sampling can take a long time for complex data, and we want to be able to leave it to run e.g. overnight. For the current model though, model fitting is very quick.
+
+```{r, cache=F}
+library(Hmsc)
+
+x = rnorm(200, 10, 3)
+y = -2 + 0.4*x + rnorm(200, 0, 2)
+
+m1 = lm(y~x)
+m2 = Hmsc(Y = as.matrix(y), XData = data.frame(x), XFormula = ~x,
+         distr="normal")
+
+m2 = sampleMcmc(m2, samples=1000, transient=1000, thin=1, 
+                nChains=2, verbose=F)
+
+summary(m1)$coef
+
+mpost = convertToCodaObject(m2)
+summary(mpost$Beta)
+```
+
+The parameter estimates are very similar, though not identical. This is due to the stochasticity of the MCMC algorithm. The fact that we have sampled the posterior distribution with MCMC also means that, before we start looking more in detail at the model estimates, we should assess whether the model actually converged on a stable solution. One way to do this is to produce a posterior trace plot, which shows how the parameter estimates have changed during the MCMC chain.
+
+```{r}
+plot(mpost$Beta)
+```
+
+Here the posterior trace plot looks fine, there is no directional trend and the posterior distribution is nicely bell-shaped. We can also evaluate whether the chain has mixed (explored the parameter space) well by computing the effective sample size (which should be close to the number of posterior samples).
+
+```{r}
+effectiveSize(mpost$Beta)
+```
+
+Because we ran two independent MCMC chains, we can also assess whether they yielded similar results, which can be quantified by the so-called *potential scale reduction factor* or the Gelman-Rubin criterion. Values close to 1 means that the chains yielded similar results.
+
+```{r}
+gelman.diag(mpost$Beta, multivariate=F)$psrf
+```
+
+One advantage of Bayesian analyses is that, because we obtain the entire posterior distribution, we can carry uncertainty in parameter estimates forward to subsequent steps in the analysis. As a simple example, if we are using the parameter estimates of the simple linear model above to make predictions about the value of *y* for some values of *x*, we can obtain those predicts across the entire posterior disteribution, and thus construct e.g. a confidence interval for the predictions. Because 'confidence intervals' are well defined in standard maximum-likelihood statistics, Bayesian refer instead to 'credible intervals', often so-called 'highest posterior density' (HPD) intervals.
+
