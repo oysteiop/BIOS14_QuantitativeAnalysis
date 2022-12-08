@@ -1,0 +1,146 @@
+---
+title: "Processing and Analysis of Biological Data"
+subtitle: "Path analysis and causal inference"
+author: "Øystein H. Opedal"
+date: "8 Dec 2022"
+output: pdf_document
+fig_caption: yes
+always_allow_html: true
+pandoc_args: ["--wrap=none"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Cause and correlation in biology
+
+Correlation does not imply causation. This statement is central to scientific thinking, and underscores the importance of interpreting results from observational studies carefully, and ideally comfirming any inferred relationship experimentally. Experiments are indeed a powerful way of separating the effects of multiple correlated variables. In this chapter, we will discuss an alternative approach to inferring causality tracing back to the work of Sewall Wright a hundred years ago (Wright 1921 and later). Broaly speaking, the method can be used to infer causality by combining knowledge about the natural history/mechanics of the study species with estimated statistical parameters such as correlation coefficients and regression slopes.
+
+For more in-depth reading, I strongly recommend Bill Shipley´s book "Cause and Correlation in Biology".
+
+As an example, we will work with the alpine plants dataset.
+
+```{r}
+plants = read.csv(file="datasets/alpineplants.csv")
+```
+
+### Wrightian Path analysis
+
+In its simplest form, a path analysis consists of a series of correlations combined with linear regressions fitted to standardized variables (zero mean, unit variance), thus obtaining *path coefficients*. Before going into technical aspects, a critical point is that before estimating any parameters, causal inference through path analysis or elated methods required formulating a graphical model in the form of a *directed graph* showing the assumed causal (and non-causal) relationships between a set of variables.
+
+As an example, we will consider two different models for how snow depth, minimum winter temperature and soil moisture affect the distribution and abundance of *Carex bigelowii*. In the first model, we will assume independent effects of each predictor, thus building a path model on the form
+
+snow -> Carex.bigelowii
+
+min_T_winter -> Carex.bigelowii 
+
+soil_moist -> Carex.bigelowii
+
+An alternative model is that snow cover affects winter temperature and soil moisture, which is turn affects the plant.
+
+snow -> min_T_winter
+
+snow -> soil_moist
+
+min_T_winter -> Carex.bigelowii 
+
+In path analysis, we call the response variables (wtith arrows coming into them) *endogeneous* variables, and the predictors (with arrows only going out of them) *exogeneous* variables.
+
+The first model can be fitted as a standard multiple-regression, while the second model will involve fitting three different component models. Before fitting the models, we remove some `NA`s and z-transform all variables (including the response variables).
+
+```{r}
+plants = na.omit(plants)
+plants = as.data.frame(scale(plants))
+
+round(colMeans(plants), 2)
+round(apply(plants, 2, sd), 2)
+
+m1 = lm(Carex.bigelowii ~ snow + min_T_winter + soil_moist, data=plants)
+
+m2a = lm(min_T_winter ~ snow, data=plants)
+m2b = lm(soil_moist ~ snow, data=plants)
+m2c = lm(Carex.bigelowii ~ min_T_winter + soil_moist, data=plants)
+```
+
+```{r}
+summary(m1)
+```
+
+This model suggests positive but weakly supported effects of both snow cover and minimum winter temperature on the abundance of *Carex bigelowii*. Keep in mind though that snow cover and minimum winter temperature are strongly positively correlated, so that we may have some issues with multicollinearity in this model.
+
+EXERCISE: Draw the path diagram corresponding to this model, and add the estimated path coefficients. We can calculate the unexplained variance ("U") in the response as $\sqrt{(1-r^2)}$ (which places it on the standardized [correlation] scale like the path coefficients).
+
+In this model we can calculate the total (net) effect of snow cover on the abundance of *Carex bigelowii* by summing the direct effect and the effects arising through correlations with other variables.
+
+```{r, include=T}
+summary(m1)$coef[2,1] +
+summary(m1)$coef[3,1]*cor(plants$snow, plants$min_T_winter, "pairwise") +
+summary(m1)$coef[4,1]*cor(plants$snow, plants$soil_moist, "pairwise")
+
+cor(plants$snow, plants$Carex.bigelowii, "pairwise")
+```
+
+In the second model, there is (as expected) a strong positive effect of snow cover on minimum winter temperature, and in turn a positive effect of winter temperature on *Carex bigelowii*. Thus, under this model, we have strong support for the hypothesised causal links from snow cover to *Carex* abundance.
+
+EXERCISE: Draw the path diagram and interpret the direct and indirect effects of snow cover on *Carex* abundance.
+
+```{r}
+summary(m2a)$coef
+summary(m2b)$coef
+summary(m2c)$coef
+```
+
+## Structural equation modelling
+
+Structural equation modelling is a further development of path analysis that offers greater flexibility compared to traditional path analysis. Below we fit our first candidate model.
+
+```{r, fig.height=3, fig.width=7}
+library(lavaan)
+library(semPlot)
+
+mod = '
+  Carex.bigelowii ~ snow + min_T_winter + soil_moist
+'
+
+lmod = sem(mod, data=plants)
+summary(lmod)
+
+par(mfrow=c(1,2))
+semPaths(lmod, what="diagram")
+semPaths(lmod, what="est")
+```
+
+Similarly we can fit our alternative model.
+
+```{r}
+mod2 = '
+  min_T_winter ~ snow
+  soil_moist ~ snow
+  Carex.bigelowii ~ min_T_winter + soil_moist
+'
+
+lmod2 = sem(mod2, data=plants)
+summary(lmod2, fit.measures=F)
+
+par(mfrow=c(1,2))
+semPaths(lmod2, what="diagram")
+semPaths(lmod2, what="est")
+```
+
+Note that for a SEM containing multiple components, the `lavaan` package provides a hypothesis test for the entire model. The interpretation of these is different from what we are used to for normal models. In this case the null hypothesis is that the model represents the data well, and a low p-value therefore indicates *bad* model fit, while a higher p-value indicate decent fit to the data. However, as always, we need to interpret any result in light of the parameter estimates.
+
+Finally, there are several further extensions of structural equation modelling, allowing e.g the inclusion of unmeasured latent variables, and the use of more flexible link functions (through GLMs). One package for fitting such flexible models is `piecewiseSEM`
+
+```{r, fig.height=4, fig.width=4}
+library(piecewiseSEM)
+
+model=psem(lm(soil_moist~snow, data=plants),
+           lm(min_T_winter~snow, data=plants),
+           lm(Carex.bigelowii~min_T_winter+soil_moist, data=plants), data=plants)
+
+summary(model)
+plot(model)
+```
+
+The `piecewiseSEM` implements tests of so-called *directed separation*, which is a test for conditional non-independence of variables. Here, we test e.g. if *Carex* abundance is really conditionally independent of snow cover, i.e. after we have accounted for winter temperature and soil moisture. We also get an overall test for the model, which is the same as we got with our `lavaan` SEM model.
