@@ -2,7 +2,7 @@
 title: "Processing and Analysis of Biological Data"
 subtitle: "The Linear Model 1: Linear regression"
 author: "Øystein H. Opedal"
-date: "1 Nov 2022"
+date: "31 Oct 2023"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -12,18 +12,17 @@ pandoc_args: ["--wrap=none"]
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## 4. The linear model I: Introduction and linear regression
 Nearly all the statistical models we will discuss in this text are forms of the linear model
 
 $y_i = \beta_0 + \Sigma_j x_{ij} \beta_j + \epsilon_i$
 
-The term $\beta_0$ (sometimes denoted $\alpha$) is the *intercept*, which in the context of a linear regression gives the value of the response variable $y$ when the predictor variable $x$ is zero. The $\beta_j$ are the coefficients ('slopes') for the predictor variables $x$, and the $\epsilon$ represent the *residuals*, the deviations of each data point from it's expected value based on the fitted model.The linear model assumes that the residuals (not the data!) are normally distributed, though minor deviations from this is not generally a problem.
+The term $\beta_0$ (sometimes denoted $\alpha$) is the *intercept*, which in the context of a linear regression gives the value of the response variable $y$ when the predictor variable $x$ is zero. The $\beta_j$ are the coefficients ('slopes') for the predictor variables $x$, and the $\epsilon$ represent the *residuals*, the deviations of each data point from it's expected value based on the fitted model. The linear model assumes that the residuals (not the data!) are normally distributed, though minor deviations from this is not generally a problem.
 
 In the following, we will consider a series of examples of linear models fitted to simulated data. After simulating some values of the predictor $x$, we define $y$ as a function of $x$ and add some residual variance to the data (i.e. we simulate data from the same linear model that we will eventually fit to the data.) The advantage of starting from simulated data is that we know the true values of the parameters we will try to estimate. This is very useful when we want to check that our analysis is doing what we think it is doing.
 
-As noted above, `R` functions know the order of arguments. Note how the second incidence of `rnorm` below skips the formalities.
+In the code below, note that `R` functions know the order of arguments, and that second incidence of `rnorm` below skips the formalities. To know the names and order of arguments to functions, call `?function`.
 
-```{r, fig.height=4, fig.width=4}
+```{r, fig.height=4, fig.width=4, fig.cap="Scatterplot of simulated data from a linear model"}
 set.seed(85)
 x = rnorm(n=200, mean=10, sd=2)
 y = 0.4*x + rnorm(200, 0, 1)
@@ -33,9 +32,9 @@ plot(x, y, las=1,
      ylab="Leaf width (mm)")
 ```
 
-At this point let's talk about how to write `R` code. In the `R` chunks above you may start to notice some 'style conventions'. When we are new to `R` and coding, most of us write really messy code. It is now becoming mandatory to publish our code alongside our papers, and we thus have to learn to write code that is easy to read and pleasent to look at. I don't follow all the 'rules' around this, but at least I try to be consistent. For example, the strict `R` convention has been to use the `<-` operator for assignments, but I find the `=` easier. Note though the spaces to either side of `=` that makes the code easier to read. Within functions, add a space after commas.
+At this point let's talk about how to write `R` code. In the `R` chunk above you may start to notice some style conventions. When we are new to `R` and coding, most of us write really messy code. It is now becoming mandatory to publish our code alongside our papers, and we thus have to learn to write code that is easy to read and pleasant to look at. I don't follow all the 'rules' around this, but at least I try to be consistent. For example, the strict `R` convention has been to use the `<-` operator for assignments, but I find the `=` easier. Note though the spaces to either side of `=` that makes the code easier to read. Within functions, add a space after commas.
 
-In scatterplots, a useful change from the default is to make the *y*-axis labels horizontal by setting `las=1`. There are hundreds of ways to change the appearence of `R`-plots, see the wonderful world of `par()`. If you prefer, you can choose to learn alternative plotting frameworks such as `ggplot`, but these lecture notes will use `R` packages only when strictly needed.
+In scatterplots, a useful change from the default is to make the *y*-axis labels horizontal by setting `las=1`. There are hundreds of ways to change the appearance of `R`-plots, see the wonderful world of `par()`. If you prefer, you can choose to learn alternative plotting frameworks such as `ggplot`, but in these lecture notes I will use `R` packages only when strictly needed.
 
 The aim of regression analysis is to estimate the linear relationship between a response variable (or 'dependent variable') and one or more predictor variables ('independent variables'). The most common form of regression analysis is so-called ordinary least-square (OLS) regression, in which the regression parameters are estimated so as to minimize the square deviations of the data points from the estimated regression line. The deviations are termed *residuals*, and are assumed to be normally distributed.
 
@@ -43,23 +42,45 @@ The aim of regression analysis is to estimate the linear relationship between a 
 m = lm(y~x)
 ```
 
-The object `m` now holds the fitted model. Let's extract the model coefficients and produce some plots of the residuals.
+The object `m` now holds the fitted model. Let's first extract the model coefficients and produce some plots of the residuals. To do so we first pull out the parameter estimates from the fitted model. In general, to extract a specific value or component of an object, we can call `str()`, which will return a list of components available within the object. We then use `$` to index the component we want to extract (here `m$coef`).
 
-```{r, fig.height=4, fig.width=8}
+```{r}
+cf = m$coef
+cf
+```
 
-cf = summary(m)$coef
-predvals = cf[1,1] + cf[2,1]*x
+EXERCISE: Use the parameter estimates to draw (by hand) the scatterplot of *y* vs *x* with the regression line, indicating the location of the intercept and roughly the correct slope.
+
+To obtain the predicted values, we pull out (using square brackets `[]` to index elements of a vector) the relevant parameter estimates (intercept and slope), and compute the predicted values using the equation for the linear model we fitted. Below we also add lines from the predicted values to the actual value of the response variable, illustrating the residuals.
+
+```{r, fig.height=4, fig.width=8, fig.cap="Scatterplot with fitted regression line and illustration of residuals"}
+
+predvals = cf[1] + cf[2]*x
 
 par(mfrow=c(1,2))
-plot(x, y, las=1)
+plot(x, y, las=1,     
+     xlab="Leaf length (mm)", 
+     ylab="Leaf width (mm)")
 abline(m)
 segments(x, y, x, predvals)
-hist(residuals(m), las=1)
+hist(residuals(m), xlab="", las=1)
 ```
 
 These residuals are fine, as is of course fully expected given that we simulated the data from the (gaussian) linear model. There are many other ways of assessing whether the model assumptions are met, see for example what happens if you call `plot(m)` after setting `par(mfrow=c(2,2))`. Notice that the `plot` function is *generic*, it produces a different result depending on what is fed to it. If we call `plot(x,y)` when both `x` and `y` are continuous variables, we get a scatterplot. If `x` is a factor, we get a boxplot.
 
-Let's now have a look at the results of our linear model fit.
+Above we also added the fitted regression line through the ready-made `abline` function. To keep the regression line within the data range, it is better to make predictions for new values of $x$ spanning the data range and add the regression line using the `lines` function.
+
+```{r, fig.height=4, fig.width=4, fig.cap="Scatterplot with fitted regression line"}
+newx = seq(min(x), max(x), length.out=200)
+predy = cf[1] + cf[2]*newx
+
+plot(x, y, las=1, 
+     xlab="Leaf length (mm)", 
+     ylab="Leaf width (mm)")
+lines(newx, predy)
+```
+
+After checking that the residuals are fine, let's now have a look at the results of our linear model fit.
 
 ```{r}
 summary(m)
@@ -77,18 +98,19 @@ The $P$-value is the probability of observing the observed value of the test sta
 
 Because the $P$-value is obtained by comparing our observed test statistic $t$ to its known distribution, and $t$ increases with sample size, it follows that when the sample size increases, anything will at some point be statistically significant. This is the reason why there are now increasing calls for abandoning $P$-values as the standard measure of statistical significance. That being said $P$-values do provide a 'quick and dirty' way of assessing statistical support, and can help guide our interpretation of the results. We will later return to alternative methods of evaluating statistical support, but for now we focus on the more important point: interpretation of the results needs to be done in light of the parameter estimates, their units, and their consequences within the context of the analysis/study.
 
-EXERCISE: Use the parameter estimates to draw (by hand) the scatterplot of *y* vs *x* with the regression line, indicating the location of the intercept and roughly the correct slope.
+EXERCISE: Use non-parametric bootstrapping to derive a standard error for the slope of the linear regression above. To do so, produce a data frame holding the `x` and `y` values, sample from the data set (with replacement), fit the model, and save each estimate for the slope of y on x. The samples will give the sampling distribution for the slope, and its standard deviation will provide an estimate of the standard error.
 
-EXERCISE: Use non-parametric bootstrapping to derive a standard error for the slope of the linear regression above. To do so, sample from the data set, fit the model, and save the sampling distribution for the slope of y on x.
+```{r}
+df = data.frame(x, y)
+head(df)
+```
 
 ```{r, echo=F}
-df = data.frame(x, y)
-
-est=NULL
+est = NULL
 for(i in 1:1000){
 s = df[sample(1:nrow(df), replace=T),]
 m1 = lm(s$y~s$x)
-est[i] = summary(m1)$coef[2,1]
+est[i] = m1$coef[2]
 }
 sd(est)
 ```
@@ -101,12 +123,12 @@ cov(y,x)/var(x)
 
 Although regression slopes are very often reported without any units, it is important to remember that the slopes in fact carry the units of both the response and predictor variables. In our example the response and predictor are both measured in *mm*, and the slope is therefore 0.43 *mm/mm*. When we report this in the text, we generally want also to report the standard error, i.e. $slope = 0.43 \pm{0.04}$ *mm/mm*. Thus, in our example, the response variable increases by 0.43 *mm* per *mm* increase in the predictor. The small standard error (relative to the slope estimate) directly indicates the strong statistical support.
 
-To facilitate further interpretation, we can also report the consequences of a realistic change in the predictor variable. Let's say that we want to know how much $y$ changes for a one standard deviation change in $x$.
+To facilitate further interpretation, we can also report the consequences of a realistic change in the predictor variable. Let's say that we want to know how much $y$ changes for a one standard deviation change in $x$. To do so we compute the difference in the predicted values when $x$ is at its mean (second term below), and when $x$ in at its mean + one standard deviation (first term below).
 
 ```{r}
-coefs = summary(m)$coef
-(coefs[2,1]*(mean(x) + sd(x))) - (coefs[2,1]*mean(x))
+(cf[2]*(mean(x) + sd(x))) - (cf[2]*mean(x))
 ```
+
 Here, we could write in the results section that 'In the study population, leaf width increased by 0.80 *mm* per standard deviation increase in leaf length'.
 
 As a special case, a regression where both the response and predictor variable are natural log-transformed will have a slope interpretable as an *elasticity*, which describes the % change in the response per % change in the predictor. This is another example of the nice proportional properties of the natural log.
@@ -121,7 +143,7 @@ The $r^2$ of our model is 0.431, which means that 43.1% of the variance in $y$ i
 To understand why the $r^2$ gives the % variance explained, note that the $r^2$ can be computed as the variance in the predicted values $\hat{y}$, $$V(\hat{y}) = V(X\beta)$$ divided by the total variance in the response variable $V(y)$.
 
 ```{r}
-y_hat = coefs[1,1] + coefs[2,1]*x
+y_hat = cf[1] + cf[2]*x
 var(y_hat)
 var(y_hat)/var(y)
 ```
@@ -129,22 +151,20 @@ var(y_hat)/var(y)
 Another way to compute the variance explained by a predictor is $V(x) = \beta_x^2\sigma_x^2$, where $\beta_x$ is the parameter estimate (regression slope) for predictor $x$, and $\sigma_x^2$ is the variance of the predictor.
 
 ```{r}
-coefs[2,1]^2*var(x)
+cf[2]^2*var(x)
 ```
 
-Finally, we can use the fitted model to make predictions for new values of $x$, which can be used e.g. to construct a regression line.
+### Exercise: fitting a linear regression to real data
+Choose any dataset you may have involving a continuous response variable and an continuous predictor. Fit a simple linear regression, interpret the results, produce a nice figure including the fitted regression line, and write simple methods and results presenting the analysis and results.
 
-```{r, fig.height=4, fig.width=4}
-newx = seq(min(x), max(x), length.out=200)
-predy = coefs[1,1] + coefs[2,1]*newx
+If you don't have any data, use the dataset `bird_allometry` in the datasets folder. This dataset contains body mass and brain mass for males and females of different bird species. The scaling of brain size (or other body parts) with body size is referred to as the study of allometry, and you may want to read about these analyses before fitting your models. As a hint, the scaling of parts of a body with body size is expected to follow a power-law relationship on the form $y = ax^b$, which can be linearized through the logarithmic transformation $log(y) =log(a) + b \times log(x)$.
 
-plot(x, y, las=1, 
-     xlab="Leaf length (mm)", 
-     ylab="Leaf width (mm)")
-lines(newx, predy)
+```{r}
+birds = read.csv("datasets/allometry/bird_allometry.csv")
+head(birds)
 ```
 
-### Exercise: How error in x- and y-variables affect the slope
+### Optional exercise: How error in x- and y-variables affect the slope
 
 The standard linear model assumes that the predictor variable is measured without error. When there is measurement error, this can lead to a bias in the estimated slope. Simulate data with measurement error in the predictor, and produce a plot showing the effect on the estimated slope. As always with programming exercises, start by performing the necessary operations once, before building loops or functions. Here, you can start by simulating some data, and fit the model with no measurement error. Then, add some error, and see what happens to the slope estimate. 
 
@@ -193,14 +213,4 @@ segments(errors, slope_est, errors, corrslope)
 ```
 
 What about error in the response variable? Repeat the exercise with error in *y* instead of error in *x*. What happens?
-
-### Exercise: fitting a linear regression to real data
-Choose any dataset you may have involving a continuous response variable and an continuous predictor. Fit a simple linear regression, interpret the results, produce a nice figure including the fitted regression line, and write simple methods and results presenting the analysis and results.
-
-If you don't have any data, use the dataset `bird_allometry` in the datasets folder. This dataset contains body mass and brain mass for males and females of different bird species. The scaling of brain size (or other body parts) with body size is referred to as the study of allometry, and you may want to read about these analyses before fitting your models. As a hint, the scaling of parts of a body with body size is expected to follow a power-law relationship on the form $y = ax^b$, which can be linearized through the logarithmic transformation $log(y) =log(a) + b \times log(x)$.
-
-```{r}
-birds = read.csv("datasets/allometry/bird_allometry.csv")
-head(birds)
-```
 

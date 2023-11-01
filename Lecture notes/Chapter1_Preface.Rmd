@@ -2,7 +2,7 @@
 title: "Processing and Analysis of Biological Data"
 subtitle: "Preface and summary statistics"
 author: "Øystein H. Opedal"
-date: "21 Oct 2022"
+date: "24 Oct 2023"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -20,9 +20,11 @@ Beyond these lecture notes, the main course literature is the book
 
 Gerry P Quinn and Michael J Keough. 2002. Experimental Design and Data Analysis for Biologists, Cambridge University Press, ISBN: 9780521009768.
 
-Like most biostatistics texts this is a reference in which to look up specific topics, rather than a book to be read chapter by chapter. Personally I have also found Crawleys brick 'The R Book' useful in the past, it's as much a statistics text as an R text.
+Like most biostatistics texts this is a reference in which to look up specific topics, rather than a book to be read chapter by chapter. Personally I have also found Michael Crawleys´ brick 'The R Book' useful in the past, it's as much a statistics text as an R text.
 
 What separates this document (and this course) from 'typical' texts in biostatistics is the limited focus on statistical hypothesis testing. Though we will discuss key aspects of hypothesis testing in the traditional sense, focus will be throughout on quantification, parameter estimation, and biological interpretation of results. This choice is made in an attempt to mitigate an issue that occurs frequently in scientific writing, namely that the presentation of results in biological publications has increasingly tended towards a focus on statistical hypothesis testing (‘significance testing’), at the cost of focus on the biological significance of any result obtained. An example is sentences on the form ‘the treatment significantly (P < 0.05) affected the growth of plants’ in place of an appropriate sentence such as ‘plants in the high-fertilizer treatment grew 40% larger than those in the low-fertilizer treatment’. There is now a growing focus on turning this trend (Wasserstein & Lazar 2016), and this must start with the way statistics are taught in biostatistical courses such as this one.
+
+Wasserstein, R. L., and N. A. Lazar. 2016. The ASA Statement on p-Values: Context, Process, and Purpose. The American Statistician 70: 129-133.
 
 Beyond quantification and data analysis, the following chapters will also introduce some basic data handling, scientific programming, and graphics. These skills are by now essential for most practicing researchers, and I like to think the skills will be useful also for those that put their Biology education to use outside of academia.
 
@@ -43,14 +45,14 @@ When measurements are categories (e.g. red vs. blue vs. green), they are on a *n
 ## Summary statistics
 Before departing on any data analysis, it is advisable to explore the data at hand both graphically, and by obtaining relevant summary statistics. Summary statistics are those that aim to describe the properties of the data. For example, the central tendency of a dataset is generally measured by the arithmetic mean (typically denoted $\mu$ or $\bar{x}$), median, or, less frequently, the mode. Which of these to choose depends in part on the distribution of the data. If the data are skewed (tendency towards large or small values), the mean can give a misleading picture of the central tendency. The same issue arises if there are extreme values (outliers) that will tend to affect the mean much more than they affect the median. In some cases, a good option can be to report both the mean and the median, which together will give a more complete impression of the data distribution. For ordinal or nominal variables, the mode may be a suitable option.
 
-Another measure of central tendency that buffers the influence of large values is the geometric mean $(\Pi_{i=1}^n x_i)^\frac{1}{n}$. The geometric mean is equal to the exponent of the mean of the natural logs of the data. The geometric mean increases towards the arithmetic mean (here 20, solid line) with decreasing variance in the data.
+Another measure of central tendency that buffers the influence of large values is the geometric mean $(\Pi_{i=1}^n x_i)^\frac{1}{n}$. The geometric mean is equal to the exponent of the mean of the natural logs of the data. The geometric mean increases towards the arithmetic mean (here 20, solid line) with decreasing variance in the data. The slight scatter in the plot below arises from the use of a randomly generated dataset to generate each datapoint.
 
-```{r, fig.height=4, fig.width=4}
+```{r, fig.height=4, fig.width=4, echo=F, fig.cap="Relationship between arithmetic (solid line) and geometric mean with increasing variance in the data"}
 out = NULL
 sdvals = seq(0, 10, 0.1)
 
 for(i in 1:length(sdvals)){
-d = rnorm(500, 20, sd=sdvals[i])
+d = rnorm(10000, 20, sd=sdvals[i])
 d = d[which(d>0)]
 out[i] = exp(mean(log(d)))
 }
@@ -155,12 +157,12 @@ mean(x) + 1.96*se_x
 
 EXERCISE: Derive a 95% confidence interval for the CV of $x$.
 
-### Exercise: The proportional properties of the natural log
-Use simulated data to show the close relationship between the SD of log-transformed data and the $CV$ on arithmetic scale. You may need e.g. the `rnorm` function and a *for*-loop to achieve this. One strategy would be to start with comparing the two values for a single case, then build a matrix to hold the paired values, and finally use a *for*-loop to populate the matrix. see Appendix 1 for help to get started with programming. The following figure illustrates the kind of pattern we expect.
+### Optional exercise: The proportional properties of the natural log
+Use simulated data to show the close relationship between the SD of log-transformed data and the $CV$ on arithmetic scale. You may need e.g. the `rnorm` function and a *for*-loop to achieve this. One strategy would be to start with comparing the two values for a single case, then build a matrix to hold the paired values, and finally use a *for*-loop to populate the matrix. See Appendix 1 for help to get started with programming. The following figure illustrates the kind of pattern we expect.
 
 Before starting to work on exercises in R, read the Appendix on reproducibility, and think about whether you would like to create a GitHub account for all your materials from this course.
 
-```{r, fig.height=4, fig.width=4, echo=F, warning=F}
+```{r, fig.height=4, fig.width=4, echo=F, warning=F, fig.cap="Similarity of the standard deviation of log-transformed data to the coefficient of variation"}
 set.seed(1)
 out = matrix(NA, nrow=200, ncol=2)
 sdvals = runif(200, 2, 5)
@@ -173,7 +175,7 @@ out[i,1] = cv
 out[i,2] = sd_log
 }
 
-plot(out[,1], out[,2], xlab="CV", ylab="SD_log", las=1)
+plot(out[,1], out[,2], xlab="CV(x)", ylab="SD(log[x])", las=1)
 lines(0:1, 0:1)
 ```
 
