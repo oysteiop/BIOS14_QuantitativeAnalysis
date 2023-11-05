@@ -2,7 +2,7 @@
 title: "Processing and Analysis of Biological Data"
 subtitle: "Preface and summary statistics"
 author: "Øystein H. Opedal"
-date: "24 Oct 2023"
+date: "3 Nov 2023"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -62,17 +62,17 @@ plot(sdvals, out, las=1,
 abline(h=20)
 ```
 
-An application of the geometric mean in biology is the evaluation of the long-term success of a given (evolutionary) strategy, such as the fitness consequences of variance-reducing strategies such as bet-hedging. A bet-hedging strategy is sometimes defined as one that maximizes the geometric rather than arithmetic mean fitness (by reducing e.g. the among-year variance in reproductive success).
+One application of the geometric mean in biology is the evaluation of the long-term success of a given (evolutionary) strategy, such as the fitness consequences of variance-reducing strategies such as bet-hedging. A bet-hedging strategy is sometimes defined as one that maximizes the geometric rather than arithmetic mean fitness (by reducing e.g. the among-year variance in reproductive success).
 
 Variation in the data is typically described by the variance (typically denoted $\sigma^2$) or its square root, the standard deviation ($\sqrt{\sigma^2} = \sigma$). As pointed out by R. A. Fisher, the advantage of the variance (mean squared deviation from the mean) is that variance components are additive, allowing us to partition the total variance in the data into different components (see more on Variance partitioning below). To understand why square values are additive, recall Pythagoras theorem 
 
 $c^2 = a^2 + b^2$, but $c \ne a + b$. 
 
-The standard deviation measures the mean deviation of each data point from the mean, and thus has the advantage of having the same units as the original measurements. If we have measured a trait in *mm*, the standard deviation gives the average deviation in *mm* from the mean, and is thus easy to interpret. 
+The standard deviation measures the mean deviation of each data point from the mean, and thus has the advantage of having the same units as the original measurements. If we have measured a trait in *mm*, the standard deviation gives the average deviation in *mm* from the mean, and is thus easy to interpret.
 
-Note that the variance and standard deviation are measures of dispersion in the data, not the certainty of an estimate. Therefore, unlike *standard errors* ($SE=SD/\sqrt{n}$), the standard deviation should not be given with the $\pm$ sign. This mistake is very frequent in papers in biology.
+Note that the variance and standard deviation are measures of dispersion in the data, *not* the certainty of an estimate. Therefore, unlike *standard errors* ($SE=SD/\sqrt{n}$), the standard deviation should not be given with the $\pm$ sign. This mistake is very frequent in papers in biology.
 
-Very often we are interested in measuring the proportional variation in a variable. The idea is that, because larger things are more variable than small things, we may want to compare how variable different entities are, *proportional to their mean*. One common measure is the coefficient of variation ($CV$), defined as
+Very often we are interested in measuring the proportional variation in a variable. The idea is that, because larger things are more variable than smaller things, we may want to compare how variable different entities are, *proportional to their mean*. One common measure is the coefficient of variation ($CV$), defined as
 
 $CV = \frac{\sigma}{\mu}$
 
@@ -148,14 +148,25 @@ Given that we also have the full sampling distribution, we can also choose to de
 quantile(out, c(0.025, 0.975))
 ```
 
-Recall that we could also have derived the 95% confidence interval analytically as $\pm 1.96SE$.
+Recall that we could also have derived the 95% confidence interval analytically as $\pm 1.96SE$. This follows from the properties of the *standard normal distribution* (with a mean of zero and a variance of one), for which the 2.5 and 97.5 percentiles falls ~1.96 standard deviations from the mean. The quantiles of the standard normal distribution are available in `R` through the `qnorm` function. The same is true for other probability distributions, e.g. `qbinom` for the binomial distribution etc.
+
+```{r}
+qnorm(c(0.025, 0.975))
+```
+```{r, fig.height=4, fig.width=4, echo=F, fig.cap="Density of the standard normal distribution, with veritical lines illustrating 95% of the distribution"}
+xx = seq(-3, 3, length.out=200)
+yy = dnorm(xx)
+plot(xx,yy, type="l", las=1, xlab="z-score", ylab="Density")
+abline(v=-1.96)
+abline(v=1.96)
+```
 
 ```{r}
 mean(x) - 1.96*se_x
 mean(x) + 1.96*se_x
 ```
 
-EXERCISE: Derive a 95% confidence interval for the CV of $x$.
+EXERCISE: Use non-parametric bootstrapping to derive a 95% confidence interval for the CV of $x$. Start by writing a function that computes the CV for a variable (see the Appendix for a brief introduction to writing functions in `R`.
 
 ### Optional exercise: The proportional properties of the natural log
 Use simulated data to show the close relationship between the SD of log-transformed data and the $CV$ on arithmetic scale. You may need e.g. the `rnorm` function and a *for*-loop to achieve this. One strategy would be to start with comparing the two values for a single case, then build a matrix to hold the paired values, and finally use a *for*-loop to populate the matrix. See Appendix 1 for help to get started with programming. The following figure illustrates the kind of pattern we expect.
@@ -175,7 +186,9 @@ out[i,1] = cv
 out[i,2] = sd_log
 }
 
-plot(out[,1], out[,2], xlab="CV(x)", ylab="SD(log[x])", las=1)
+plot(out[,1], out[,2], 
+     xlab="CV(x)", 
+     ylab="SD(log[x])", las=1)
 lines(0:1, 0:1)
 ```
 

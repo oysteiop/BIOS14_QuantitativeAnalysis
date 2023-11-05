@@ -66,7 +66,7 @@ segments(x, y, x, predvals)
 hist(residuals(m), xlab="", las=1)
 ```
 
-These residuals are fine, as is of course fully expected given that we simulated the data from the (gaussian) linear model. There are many other ways of assessing whether the model assumptions are met, see for example what happens if you call `plot(m)` after setting `par(mfrow=c(2,2))`. Notice that the `plot` function is *generic*, it produces a different result depending on what is fed to it. If we call `plot(x,y)` when both `x` and `y` are continuous variables, we get a scatterplot. If `x` is a factor, we get a boxplot.
+These residuals are fine, as is of course fully expected given that we simulated the data from the (Gaussian) linear model. There are many other ways of assessing whether the model assumptions are met, see for example what happens if you call `plot(m)` after setting `par(mfrow=c(2,2))`. Notice that the `plot` function is *generic*, it produces a different result depending on what is fed to it. If we call `plot(x,y)` when both `x` and `y` are continuous variables, we get a scatterplot. If `x` is a factor, we get a boxplot.
 
 Above we also added the fitted regression line through the ready-made `abline` function. To keep the regression line within the data range, it is better to make predictions for new values of $x$ spanning the data range and add the regression line using the `lines` function.
 
@@ -80,7 +80,7 @@ plot(x, y, las=1,
 lines(newx, predy)
 ```
 
-After checking that the residuals are fine, let's now have a look at the results of our linear model fit.
+After checking that the residuals are fine, let's now have a look at the results of our linear model fit. The `summary` function is also generic.
 
 ```{r}
 summary(m)
@@ -98,7 +98,7 @@ The $P$-value is the probability of observing the observed value of the test sta
 
 Because the $P$-value is obtained by comparing our observed test statistic $t$ to its known distribution, and $t$ increases with sample size, it follows that when the sample size increases, anything will at some point be statistically significant. This is the reason why there are now increasing calls for abandoning $P$-values as the standard measure of statistical significance. That being said $P$-values do provide a 'quick and dirty' way of assessing statistical support, and can help guide our interpretation of the results. We will later return to alternative methods of evaluating statistical support, but for now we focus on the more important point: interpretation of the results needs to be done in light of the parameter estimates, their units, and their consequences within the context of the analysis/study.
 
-EXERCISE: Use non-parametric bootstrapping to derive a standard error for the slope of the linear regression above. To do so, produce a data frame holding the `x` and `y` values, sample from the data set (with replacement), fit the model, and save each estimate for the slope of y on x. The samples will give the sampling distribution for the slope, and its standard deviation will provide an estimate of the standard error.
+EXERCISE: Use non-parametric bootstrapping to derive a standard error for the slope of the linear regression above. To do so, produce a data frame holding the `x` and `y` values, sample from this dataset (with replacement), fit the model, and save each estimate for the slope of y on x. The samples will give the sampling distribution for the slope, and its standard deviation will provide an estimate of the standard error.
 
 ```{r}
 df = data.frame(x, y)
@@ -109,7 +109,7 @@ head(df)
 est = NULL
 for(i in 1:1000){
 s = df[sample(1:nrow(df), replace=T),]
-m1 = lm(s$y~s$x)
+m1 = lm(y~x, data=s)
 est[i] = m1$coef[2]
 }
 sd(est)
@@ -123,7 +123,7 @@ cov(y,x)/var(x)
 
 Although regression slopes are very often reported without any units, it is important to remember that the slopes in fact carry the units of both the response and predictor variables. In our example the response and predictor are both measured in *mm*, and the slope is therefore 0.43 *mm/mm*. When we report this in the text, we generally want also to report the standard error, i.e. $slope = 0.43 \pm{0.04}$ *mm/mm*. Thus, in our example, the response variable increases by 0.43 *mm* per *mm* increase in the predictor. The small standard error (relative to the slope estimate) directly indicates the strong statistical support.
 
-To facilitate further interpretation, we can also report the consequences of a realistic change in the predictor variable. Let's say that we want to know how much $y$ changes for a one standard deviation change in $x$. To do so we compute the difference in the predicted values when $x$ is at its mean (second term below), and when $x$ in at its mean + one standard deviation (first term below).
+To facilitate further interpretation, we can also report the consequences of a realistic change in the predictor variable. Let's say that we want to know how much $y$ changes for a one standard deviation change in $x$. To do so we compute the difference in the predicted values when $x$ is at its mean (second term below), and when $x$ in at its mean + one standard deviation (first term below). Why can we ignore the intercept here?
 
 ```{r}
 (cf[2]*(mean(x) + sd(x))) - (cf[2]*mean(x))
@@ -139,7 +139,8 @@ Another important parameter in the summary table is the coefficient of determina
 cor(x,y)^2
 ```
 
-The $r^2$ of our model is 0.431, which means that 43.1% of the variance in $y$ is explained by $x$. In general, it is often nice to report the $r^2$ directly as a percent (i.e. $\times 100$). 
+The $r^2$ of our model is 0.431, which means that 43.1% of the variance in $y$ is explained by $x$. In general, it is often nice to report the $r^2$ directly as a percent (i.e. $\times 100$).
+
 To understand why the $r^2$ gives the % variance explained, note that the $r^2$ can be computed as the variance in the predicted values $\hat{y}$, $$V(\hat{y}) = V(X\beta)$$ divided by the total variance in the response variable $V(y)$.
 
 ```{r}
@@ -155,13 +156,31 @@ cf[2]^2*var(x)
 ```
 
 ### Exercise: fitting a linear regression to real data
-Choose any dataset you may have involving a continuous response variable and an continuous predictor. Fit a simple linear regression, interpret the results, produce a nice figure including the fitted regression line, and write simple methods and results presenting the analysis and results.
+Choose any dataset you may have involving a continuous response variable and a continuous predictor. Fit a simple linear regression, interpret the results, produce a nice figure including the fitted regression line, and write simple methods and results presenting the analysis and results.
 
 If you don't have any data, use the dataset `bird_allometry` in the datasets folder. This dataset contains body mass and brain mass for males and females of different bird species. The scaling of brain size (or other body parts) with body size is referred to as the study of allometry, and you may want to read about these analyses before fitting your models. As a hint, the scaling of parts of a body with body size is expected to follow a power-law relationship on the form $y = ax^b$, which can be linearized through the logarithmic transformation $log(y) =log(a) + b \times log(x)$.
 
 ```{r}
 birds = read.csv("datasets/allometry/bird_allometry.csv")
 head(birds)
+```
+```{r, echo=F}
+males = birds[birds$Sex=="m",]
+females = birds[birds$Sex=="f",]
+
+mm = lm(log(brain_mass)~log(body_mass), data=males)
+#summary(mm)
+```
+
+```{r, fig.height=4, fig.width=4, echo=F}
+xx = seq(min(log(males$body_mass)), max(log(males$body_mass)), 
+         length.out=100)
+yy = mm$coef[1] + mm$coef[2]*xx
+plot(log(males$body_mass), log(males$brain_mass), 
+     xlab="Body mass (log g)",
+     ylab="Brain mass (log g)",
+     las=1, pch=21, col="black", bg="lightblue")
+lines(xx, yy, lwd=2)
 ```
 
 ### Optional exercise: How error in x- and y-variables affect the slope
@@ -213,4 +232,3 @@ segments(errors, slope_est, errors, corrslope)
 ```
 
 What about error in the response variable? Repeat the exercise with error in *y* instead of error in *x*. What happens?
-

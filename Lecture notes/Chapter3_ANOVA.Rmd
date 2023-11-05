@@ -2,7 +2,7 @@
 title: "Processing and Analysis of Biological Data"
 subtitle: "The Linear Model II: Analysis of Variance"
 author: "Øystein H. Opedal"
-date: "8 Nov 2022"
+date: "2 Nov 2023"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -19,10 +19,11 @@ Let's simulate some data, fit a linear model, and perform an ANOVA.
 
 ```{r, fig.width=4, fig.height=4}
 set.seed(100)
-groups = as.factor(rep(c("Small", "Medium", "Large"), each=50))
+groups = as.factor(rep(c("Low", "Medium", "High"), each=50))
 x = c(rnorm(50, 10, 3), rnorm(50, 13, 3), rnorm(50, 14, 3))
 
-plot(groups, x, las=1, xlab="")
+plot(groups, x, las=1, xlab="",
+     ylab="Body size (g)")
 ```
 
 Plots like this are called 'boxplots', and can be useful for visualising the distribution of data across factor levels or other groups. With the default settings, the boxes range from the 1st to the 3rd quartile, i.e. they span 50% of the data. The thick lines show the median, the 'whiskers' extend to 1.5 times the inter-quantile range, and individual circles show outliers. This representations allows us to assess whether the data are roughly normally distributed within each group, an assumption of the ANOVA model.
@@ -33,7 +34,8 @@ EXTRA EXERCISE: Reproduce a plot similar to this for the ANOVA exercise.
 
 ```{r, fig.width=4, fig.height=4, echo=F}
 plot(as.numeric(groups) + rnorm(150,0,0.03), x, 
-     las=1, xlab="", type="p", col="grey",
+     las=1, xlab="", ylab="Body size (g)",
+     type="p", col="grey",
      xlim=c(0.5, 3.75), xaxt="n", yaxt="n")
 axis(1, 1:3, labels=levels(groups))
 
@@ -80,16 +82,16 @@ In an ANOVA, a statistically significant result such as the one above indicates 
 summary(m)
 ```
 
-This contains some of the same information as the ANOVA table, but we now also obtain parameter estimates. The first parameter, the intercept, corresponds to the estimated mean for the first level of the `groups` factor. In this example this happens to be 'Large', because L comes before M and S in the alphabet. The next two estimates represents *contrasts* from the reference group, and the associated hypothesis tests tests the null hypothesis that the group has the same mean as the reference group.
+This contains some of the same information as the ANOVA table, but we now also obtain parameter estimates. The first parameter, the intercept, corresponds to the estimated mean for the first level of the `groups` factor. In this example this happens to be 'High', because H comes before L and M in the alphabet. The next two estimates represents *contrasts* from the reference group, and the associated hypothesis tests tests the null hypothesis that the group has the same mean as the reference group.
 
 The summary table also gives us directly the $r^2$, which is a simple ANOVA is defined as $1-SS_E/SS_T$, where $SS_E$ is the sum of squares for the error term (residuals), and $SS_T$ is the total sum of squared. (Control question: why could we do it even more simply above?).
 
-The parameter estimates allow us to quantify the effect size, i.e. the magnitude of the difference between the groups. A useful way to report such differences is to compute the % difference (the contrast divided by the mean of the reference group, here 3.277/13.4642 = 0.243), so that we can say that 'Small individuals were 24.3% smaller than large individuals'.
+The parameter estimates allow us to quantify the effect size, i.e. the magnitude of the difference between the groups. A useful way to report such differences is to compute the % difference (the contrast divided by the mean of the reference group, here -3.456/13.701 = 0.252), so that we can say that 'Individuals in the low-food treatment were 25.2% smaller than individuals in the high-food treatment'.
 
 Note that if we want a different reference group, we can change the order of the factor levels.
 
 ```{r}
-groups = factor(groups, levels=c("Small", "Medium", "Large"))
+groups = factor(groups, levels=c("Low", "Medium", "High"))
 m = lm(x~groups)
 summary(m)
 ```
@@ -102,33 +104,34 @@ summary(m)$coef
 confint(m)
 ```
 
-Tukey
-
-## The linear model III: two-way ANOVA
+## Two-way ANOVA
 Analyses of variance can also be performed with more than one factor variable. If we have two factors, we can talk about two-way ANOVA, and so on. A typical example from biology is when we have performed a factorial experiment, and want to assess the effects of each experimental factor and their potential interaction.
 
-With two factors, a full model can be formulated as `y ~ factor1 * factor2`. Recall that in `R`syntax, the * means both main effects and their interaction, while a : means only the interaction. A detectable interaction term in this model would indicate that the effect of factor 1 depends on the level of factor 2 (and *vice versa*). If we are analysing an experiment where we have manipulated both temperature and nitrogen supply, an interaction would mean that the effect of temperature depend on the nitrogen level.
+With two factors, a full model can be formulated as `y ~ factor1 * factor2`. Recall that in `R` syntax, the * means both main effects and their interaction, while a : means only the interaction. A detectable interaction term in this model would indicate that the effect of factor 1 depends on the level of factor 2 (and *vice versa*). If we are analysing an experiment where we have manipulated both temperature and nitrogen supply, an interaction would mean that the effect of temperature depend on the nitrogen level.
 
 ### Data exercise: analysing a factorial experiment
 The following data are from an experiment where female butterflies reared on two different host plants were allowed to oviposit on the same two host plants. The data include developmental time for the larvae, the adult weight, and the growth rate of the larvae.
 
 Analyse the data to assess effects of maternal vs. larval host plant on one or more response variable. Interpret the results and produce a nice plot to illustrate.
 
-
 ```{r}
 dat = read.csv("datasets/butterflies.csv")
 names(dat)
 ```
-```{r, fig.height=4, fig.width=4, echo=T}
+
+As a first step, let us compute some summary statistics, like the mean development time for each combination of larval and maternal host plant.
+
+```{r}
 dat$MaternalHost = paste0(dat$MaternalHost, "M")
 dat$LarvalHost = paste0(dat$LarvalHost, "L")
-
 means = tapply(dat$DevelopmentTime, list(dat$MaternalHost, dat$LarvalHost), mean)
+means
+```
+
+```{r, fig.height=4, fig.width=4, echo=F, fig.cap="Larval developmental time depending on larval and maternal host plant" }
 ses = tapply(dat$DevelopmentTime, 
        list(dat$MaternalHost, dat$LarvalHost), 
        function(x) sd(x)/sqrt(sum(!is.na(x))))
-
-means
 ses
 
 plot(c(0.97, 1.03), means[,1], ylim=c(18, 40), xlim=c(0.8, 2.2),
@@ -152,18 +155,19 @@ legend("topleft", c("Maternal host", "Barbarea", "Berteroa"),
        bty="n", pch=c(NA,21,16))
 ```
 
+To get started with the formal analyses, fit a linear model with larval and maternal host, as well as their interaction, as predictors. Produce an ANOVA table.
+
 ```{r}
 names(dat)
 m = lm(DevelopmentTime~MaternalHost*LarvalHost, data=dat)
 anova(m)
-summary(m)
 ```
 
 To interpret the results, we look first at the ANOVA table. There are detectable effects of both larval and maternal host plants, with more variance explained by larval host than maternal host (based on the larger sum of squares for larval host). Furthermore, the effects of larval and maternal host are not independent, as indicated by a detectable interaction. The variance explained by the interaction term is limited though, as we can also see from the graph. 
 
 To quantify the effect size, it is useful to first compute the mean development time for each larval and maternal host plant.
 
-```{r}
+```{r, echo=F}
 colMeans(means)
 rowMeans(means)
 ```
