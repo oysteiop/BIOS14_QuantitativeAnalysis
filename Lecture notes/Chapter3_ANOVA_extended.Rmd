@@ -164,12 +164,14 @@ means
 ses = tapply(dat$DevelopmentTime, 
        list(dat$MaternalHost, dat$LarvalHost), 
        function(x) sd(x)/sqrt(sum(!is.na(x))))
+ses
 
 plot(c(0.97, 1.03), means[,1], ylim=c(18, 40), xlim=c(0.8, 2.2),
      xlab="Larval host", 
      ylab="Developmental time (days)",
      xaxt="n", las=1, pch=c(21,16), col="white")
-axis(1, 1:2, labels=c("Barbarea", "Berteroa"))
+axis(1, 1:2, labels=c(expression(paste(italic(Barbarea))),
+                      expression(paste(italic(Berteroa)))))
 
 arrows(c(0.97,1.03), means[,1]-ses[,1], c(0.97,1.03), 
        means[,1]+ses[,1], length=0.05, angle=90, code=3)
@@ -182,6 +184,36 @@ segments(1.03, means[2,1], 2.03, means[2,2])
 points(c(0.97, 1.03), means[,1], pch=c(21,16), bg="white")
 points(c(1.97, 2.03), means[,2], pch=c(21, 16), bg="white")
 
-legend("topleft", c("Maternal host", "Barbarea", "Berteroa"), 
+legend("topleft", c("Maternal host", 
+                    expression(paste(italic(Barbarea))),
+                    expression(paste(italic(Berteroa)))), 
        bty="n", pch=c(NA,21,16))
 ```
+
+To get started with the formal analyses, fit a linear model with larval and maternal host, as well as their interaction, as predictors. Produce an ANOVA table.
+
+```{r}
+names(dat)
+m = lm(DevelopmentTime~MaternalHost*LarvalHost, data=dat)
+anova(m)
+```
+
+To interpret the results, we look first at the ANOVA table. There are detectable effects of both larval and maternal host plants, with more variance explained by larval host than maternal host (based on the larger sum of squares for larval host). Furthermore, the effects of larval and maternal host are not independent, as indicated by a detectable interaction. The variance explained by the interaction term is limited though, as we can also see from the graph. 
+
+To quantify the effect size, it is useful to first compute the mean development time for each larval and maternal host plant.
+
+```{r, echo=F}
+colMeans(means)
+rowMeans(means)
+```
+
+Based on this, we could write the methods and results like this:
+
+*Methods*
+To assess differences in development time between larvae grown on *Barbarea* and *Berteroa*, and between larvae whose mothers were grown on the same two hosts, we fitted a linear model with development time as response variable, and larval and maternal hosts as predictors, and performed an analysis of variance based on the fitted model. To assess transgenerational effects, we also includes the interaction term between maternal and larval host. Thus, in R syntax, our model took the form
+
+$$Development Time \sim Larval Host * Maternal Host$$
+
+*Results*
+The larvae developed 22.1% faster when grown on Barbarea than when grown on Berteroa (mean development time = 22.6 and 29.0 days, respectively, $F_{1,283}=765.21$, Fig. 1). Larvae whose mothers were grown on Barbarea developed 10.7% faster (mean development time = 24.3 and 27.3 days, respectively, $F_{1,283}=177.90$). The difference in development time between larval host plants was slightly larger when the mother was grown on Berteroa than when the mother was grown on Barbarea (24.2% vs. 19.6% reduction in developmental time on Barbarea, respectively).
+

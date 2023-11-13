@@ -129,7 +129,7 @@ To facilitate further interpretation, we can also report the consequences of a r
 (cf[2]*(mean(x) + sd(x))) - (cf[2]*mean(x))
 ```
 
-Here, we could write in the results section that 'In the study population, leaf width increased by 0.80 *mm* per standard deviation increase in leaf length'.
+Here, we could write in the results section that 'In the study population, leaf width increased by 0.86 *mm* per standard deviation increase in leaf length'.
 
 As a special case, a regression where both the response and predictor variable are natural log-transformed will have a slope interpretable as an *elasticity*, which describes the % change in the response per % change in the predictor. This is another example of the nice proportional properties of the natural log.
 
@@ -164,24 +164,66 @@ If you don't have any data, use the dataset `bird_allometry` in the datasets fol
 birds = read.csv("datasets/allometry/bird_allometry.csv")
 head(birds)
 ```
-```{r, echo=F}
+
+Based on these data, we will estimate the allometric slopes and intercepts for the brain-body scaling, and ask whether these are similar in males and females. To do so, we start by splitting the data into males and females. 
+
+```{r, echo=T}
 males = birds[birds$Sex=="m",]
 females = birds[birds$Sex=="f",]
-
-mm = lm(log(brain_mass)~log(body_mass), data=males)
-#summary(mm)
 ```
+
+Then, we fit linear models to log-transformed brain- and body-sizes.
+
+```{r}
+mm = lm(log(brain_mass)~log(body_mass), data=males)
+mf = lm(log(brain_mass)~log(body_mass), data=females)
+```
+
+After checking that the residuals look OK, we look at the model fit for the males.
+
+```{r, fig.heigth=4, fig.width=4}
+hist(residuals(mm))
+summary(mm)
+```
+The allometric intercept (here -1.91) varies across taxa and is sometimes of interest when we are comparing allometric relationships across taxa. Here we will focus on the allometric slope, which tells us about how brain size scales with body size. The slope is much less than 1, which means that the scaling is less than proportional. The value 0.55 means that brain size increase by 5.5% per 10% increase in body size.
+
+The scaling relationship is similar, but a little bit steeper for females. Based on the standard errors of the slopes, the difference appears statistically supported. What kind of analysis could we do to directly estimate the difference in slope?
+
+```{r}
+summary(mf)
+```
+
+Let us now produce a scatterplot illustrating our results.
 
 ```{r, fig.height=4, fig.width=4, echo=F}
 xx = seq(min(log(males$body_mass)), max(log(males$body_mass)), 
          length.out=100)
+xxf = seq(min(log(females$body_mass)), max(log(females$body_mass)), 
+         length.out=100)
+
 yy = mm$coef[1] + mm$coef[2]*xx
+yyf = mf$coef[1] + mf$coef[2]*xxf
+
 plot(log(males$body_mass), log(males$brain_mass), 
      xlab="Body mass (log g)",
      ylab="Brain mass (log g)",
      las=1, pch=21, col="black", bg="lightblue")
+points(log(females$body_mass), log(females$brain_mass),
+       pch=21, col="black", bg="firebrick")
 lines(xx, yy, lwd=2)
+lines(xxf, yyf, lwd=2)
+legend("bottomright", pch=c(16,16), 
+       col=c("lightblue", "firebrick"),
+       legend=c("Males", "Females"))
 ```
+
+Based on these analyses and results, we could write the Analysis Methods and Results as follows.
+
+*Analysis Methods*
+We expected brain size to scale with body size according to a power-law relationship on the form $brainmass = a\times bodymass^b$. We linearized the expected power relationship through the logarithmic transformation $log(brainmass) =log(a) + b \times log(bodymass)$, and then fitted a linear regression model to the data. To assess whether the allometric slope ($b$) differs between the sexes, we analysed data for males and females separately.
+
+*Results*
+Brain size scaled allometrically with body size (Fig. 1). In males, brain size increased by 5.5% per 10% increase in body mass (allometric slope = $0.55\pm0.010$), and body mass explained 83.5% of the variance in brain mass. The allometric slope was slightly steeper in females ($0.57\pm0.012$).
 
 ### Optional exercise: How error in x- and y-variables affect the slope
 

@@ -2,7 +2,7 @@
 title: "Processing and Analysis of Biological Data"
 subtitle: "The Linear Model III: Multiple regression and ANCOVA"
 author: "Øystein H. Opedal"
-date: "13 Nov 2023"
+date: "8 Nov 2023"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -183,7 +183,7 @@ m2 = lm(y ~ -1 + gr + x:gr)
 summary(m2)
 ```
 
-Note that this is actually the same model as before, formulated in a different way. We can confirm this by checking that the *log likelihood* of the model remains unchanged.
+Note that this is actually the same model as before, formulated in a different way. We can confirm this by checking that the log likelihood of the model remains unchanged.
 
 ```{r}
 logLik(m)
@@ -210,7 +210,7 @@ The traits have known or assumed functions. Anther-stigma distance is important 
 
 The first step in any data analysis in always to explore the data. Make a series of histograms and plots. How are the data distributed? Are there any problematic outliers? How are patterns of trait correlations? Which traits are (proportionally) more variable?
 
-What about differences between populations? How different are the trait means? Are any of the traits detectably different? To get started, the following lines read the data.
+What about differences between populations? Are any of the traits detectably different? To get started, the following lines reads the data.
 
 ```{r}
 blossoms = read.csv("datasets/blossoms/blossoms.csv")
@@ -239,4 +239,55 @@ popstats[,-1] = round(popstats[,-1], 2)
 kable(popstats)
 ```
 
-After exploring and summarizing the data, fit some linear models to estimate the slopes of one trait on another. Interpret the results. Do the analysis on both arithmetic and log scale. Choose traits that belong to the same vs. different functional groups, can you detect any patterns in the slopes? Produce tidy figures that illustrate the results. Hint: once you have produced a scatterplot, you can add more points (e.g. for a different variable) by using the `points()` function.
+After exploring and summarizing the data, fit some linear models to estimate the slopes of one trait on another. Interpret the results. Do the analysis on both arithmetic and log scale. Choose traits that belong to the same vs. different functional groups, can you detect any patterns? Produce tidy figures that illustrate the results. Hint: once you have produced a scatterplot, you can add more points (e.g. for a different variable) by using the `points()` function.
+
+```{r, fig.height=4, fig.width=4, include=T, echo=T}
+plot(log(blossoms$LBW), log(blossoms$UBW), ylim=c(1,3.5), las=1,
+     xlab="Lower bract width( log mm)",
+     ylab="UBW/GSD (log mm)")
+points(log(blossoms$LBW), log(blossoms$GSD), pch=16)
+```
+
+```{r, include=T, echo=T}
+mUBW = lm(log(UBW)~log(LBW), data=blossoms)
+mGSD = lm(log(GSD)~log(LBW), data=blossoms)
+summary(mUBW)$coef
+summary(mGSD)$coef
+```
+
+Gland-stigma distance appears partly decoupled from variation in overall blossom size, as indicated by the much shallower slope on lower bract width. But does the degree of canalization of this trait differ among populations?
+
+```{r, include=T, echo=T}
+m = lm(log(GSD)~log(LBW)*pop, data=blossoms)
+anova(m)
+```
+
+In an analysis of covariance we start by asking whether the slope differs among groups, as indicated by statistical support for the interaction term in the linear model. Here, the sum of squares for the interaction term is low (seen in relation to the residual sum of squares), leading to weak support. We can therefore conclude that there is limited (but not no!) evidence or heterogeneity of slopes.
+
+```{r}
+m2 = lm(log(GSD)~log(LBW)+pop, data=blossoms)
+anova(m2)
+
+```
+
+The next step in the analysis of covariance is to test for differences in intercepts among groups, as indicated by by the main effect of the grouping variable (here population). The ANOVA table indicates support for population-specific intercepts (i.e. different mean GSD in different populations), and we can then go on to interpret these differences.
+
+```{r}
+summary(m2)
+```
+
+The intercepts for several populations differ from the intercept in the reference population (recall we can always call `levels(factor)` to find out what is the reference level, here the population S1. As a complement to this inference, we could compute e.g. the CV of the population means.
+
+```{r}
+popmeans = tapply(log(blossoms$GSD), blossoms$pop, mean, na.rm=T)
+sd(popmeans)*100
+
+popcvs = tapply(log(blossoms$GSD), blossoms$pop, 
+                function(x) 100*sd(x, na.rm=T))
+popcvs
+mean(popcvs)
+```
+
+The conclusion of our analysis of covariance is that there is heterogeneity in intercepts, but not in slopes. We could write this as follows.
+
+Across the eight study populations, gland-stigma distance increased by 4.7% for a 10% increase in lower bract width (slope on log-log scale = $0.47 \pm 0.05$). The mean gland-stigma distance differed among populations (coefficient of variation of population means = 4.4%).

@@ -1,8 +1,8 @@
 ---
-title: "Quantitative Analysis in Ecology and Evolution"
+title: "Processing and Analysis of Biological Data"
 subtitle: "Appendix"
 author: "Øystein H. Opedal"
-date: "1 Nov 2022"
+date: "8 Nov 2023"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -47,8 +47,8 @@ As soon as analyses become a little more complex, some programming skills are ve
 The perhaps most common programming operation during data analyses is *for*-loops. A *for*-loop performs an operation *for* each element of an index vector.
 
 ```{r}
-x = seq(1, 50, 2)
-
+x = seq(1, 20, 2)
+x
 out=NULL
 for(i in 1:length(x)){
   out[i] = x[i]*2 

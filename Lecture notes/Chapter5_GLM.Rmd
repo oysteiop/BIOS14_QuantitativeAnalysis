@@ -2,7 +2,7 @@
 title: "Processing and Analysis of Biological Data"
 subtitle: "Generalized Linear Models (GLM)"
 author: "Øystein H. Opedal"
-date: "14 Nov 2022"
+date: "9 Nov 2023"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -108,7 +108,7 @@ To interpret the results biologically and to represent them in graphs, it can be
 
 Recall from the previous section that a log odds of 0 corresponds to a probability of 0.5  ($log(\frac{0.5}{1-0.5})=log(1)=0$). If we solve the model equation (the linear predictor) for 0, we can thus obtain the predictor value corresponding to a probability of 0.5, which is often a relevant benchmark.
 
-$0 = \beta_0 + \beta_x$
+$0 = \beta_0 + \beta_xx$
 
 $\frac{-\beta_0}{\beta_x}=x$
 
