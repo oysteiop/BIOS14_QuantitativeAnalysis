@@ -144,6 +144,56 @@ Then, do a backward selection in which you start from a saturated (full) model a
 plants = read.csv(file="datasets/alpineplants.csv")
 ```
 
+```{r}
+names(plants)
+```
+
+```{r, fig.height=8, fig.width=8}
+pairs(plants[,3:12], panel=panel.smooth)
+```
+
+```{r, fig.height=4, fig.width=4}
+hist(plants$max_T_winter)
+```
+
+```{r}
+plants = plants[-which.max(plants$max_T_winter),]
+```
+
+
+```{r, fig.height=4, fig.width=4}
+m = lm(Thalictrum.alpinum~mean_T_winter+max_T_winter+min_T_winter+mean_T_summer+
+         max_T_summer+min_T_summer+light+snow+soil_moist+altitude, data=plants, na=na.exclude)
+hist(residuals(m))
+```
+
+
+```{r, fig.height=4, fig.width=4}
+m = lm(sqrt(Thalictrum.alpinum)~mean_T_winter+max_T_winter+min_T_winter+mean_T_summer+
+         max_T_summer+min_T_summer+light+snow++altitude, data=plants, na=na.exclude)
+hist(residuals(m))
+```
+
+```{r}
+summary(m)
+```
+
+Winter maximum temperature is the statistically least significant, hence we drop it from the model
+
+```{r}
+m = lm(sqrt(Thalictrum.alpinum)~mean_T_winter+min_T_winter+mean_T_summer+
+         max_T_summer+min_T_summer+light+snow+soil_moist+altitude, data=plants, na=na.exclude)
+summary(m)
+```
+
+Using the same method, we arrive at the "minimal adequate model".
+
+```{r}
+m = lm(sqrt(Thalictrum.alpinum)~mean_T_winter+mean_T_summer+
+         max_T_summer+light+snow, data=plants, na=na.exclude)
+summary(m)
+```
+
 ## Analysis of Covariance (ANCOVA)
 
 Analysis of Covariance can be thought about as a combination of regression and analysis of variance. The simplest case is when we have a single continuous variable ("covariate") and a single categorical predictor. An ANCOVA analysis can then be used to ask whether the slope of the regression differs between groups (levels of the categorical variable). A statistically supported interaction means that the slopes differ between groups, while a statistically supported main effect of groups means that the intercepts differ.

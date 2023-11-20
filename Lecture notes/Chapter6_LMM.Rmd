@@ -11,6 +11,7 @@ pandoc_args: ["--wrap=none"]
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
 ## Mixed-effect models I: Introduction
 One very common extension of the linear model is the linear mixed model. The 'mixed' comes from the fact that these models include two variable types: fixed effects and random effects.
 
@@ -67,6 +68,20 @@ VarCorr(m)
 VarAmongGroups = attr(VarCorr(m)$cond$groupID, "stddev")^2
 VarWithinGroups = attr(VarCorr(m)$cond, "sc")^2
 ```
+
+```{r}
+VarAmongGroups
+var(groupmeans)
+```
+
+The among-group variance is a little bit smaller than the actual variance of the group means. This illustrates that mixed models are good at estimating variance components while taking into account the uncertainty associated with variation within groups, which will tend to inflate the among-group variance (because the latter will include the uncertainty in the estimated means within each group). To get a feeling for how this work, we can compute the average sampling variance of each group mean, and subtract it from the among-group variance.
+
+```{r}
+mean_sampling_variance = mean(tapply(y, groupID, var)/20)
+var(groupmeans) - mean_sampling_variance
+```
+
+The result is close to the variance estimated from the mixed model.
 
 To calculate the percent of the variance explained by groups, we divide by the total estimated variance.
 
