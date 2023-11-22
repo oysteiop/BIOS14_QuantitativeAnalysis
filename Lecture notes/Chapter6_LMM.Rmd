@@ -111,6 +111,45 @@ df
 ### Data exercise: Variance partitioning with random-effects models.
 Pick any of the datasets we have worked with in the course that includes at least one grouping variable, and perform a random-effect variance partitioning. Produce a neat table and interpret the results biologically and statistically.
 
+### Random-intercept regression
+
+We can also use random intercepts to "account for" the non-independence of observations for each group. The model syntax for the fixed effects (here $x1$) is like for linear models, and for the random effects (groupID) we use the same syntax as above.
+
+```{r}
+m = glmmTMB(y ~ x1 + (1|groupID), data=data)
+
+summary(m)
+```
+
+The estimated slope is close to what we used to simulate the data (1.5), and it therefore seems like the model has adequately estimated the mean within-group relationships.
+
+The estimated random-effect variance for `GroupID` is associated with a set of estimated intercepts for each level of the Group factor. These estimates are called *best linear unbiased predictors* (BLUPs), and can be extracted and used for example to produce plots.  
+
+```{r}
+coef(m)
+```
+
+```{r, fig.height=4, fig.width=4}
+newx = seq(min(x1), max(x1), length.out=200)
+
+plot(x1, y, las=1)
+for(i in 1:length(levels(groupID))){
+  y_hat = coef(m)$cond$groupID[i,1] + coef(m)$cond$groupID[i,2]*newx
+  lines(newx, y_hat, col=i)
+}
+```
+
+We can also use the predict function to make predictions for a specific level of the random effect.
+
+```{r}
+y_hat = predict(m, newdata=list(x1=newx, groupID=rep("Group5",200)), re.form=NULL)
+```
+
+EXERCISE: Fit a naïve linear model to the same data and evaluate how the two fitted models differ.
+
+### Data exercise: random-intercept models
+Pick any of the datasets we have worked with in the course that includes at least one grouping variable, and perform a random-intercept analysis (regression, ANCOVA or ANOVA). Produce relevant summary statistics and interpret the results biologically and statistically.
+
 ### Nested and crossed random effects
 
 When we have more than one random effect, we can make further choices when specifying the random-effect structure of the model. *Nested random effects* have, as the name implies, a hierarchical structure, so that specific levels of the lower-level grouping factor occurs only for one level of the upper-level grouping factor. A typical example is hierarchical sampling designs, where we for example take several samples from a set of individuals from a set of families. In this case we could treat individual nested within family as a nested random effect. In this case we can extract variance components for family (variance among family means), individual (variance among individuals *within families*), and the residuals, which will represent variance within individuals.
@@ -142,46 +181,6 @@ summary(m)
 ```
 
 There is now much less variance explained by population and patch. This is because a large portion of the variance is explained by the fixed predictor.
-
-### Random-intercept regression
-
-We can also use random intercepts to "account for" the non-independence of observations for each group. The model syntax for the fixed effects (here $x1$) is like for linear models, and for the random effects (groupID) we use the same syntax as above.
-
-```{r}
-m = glmmTMB(y ~ x1 + (1|groupID), data=data)
-
-summary(m)
-```
-
-The estimated slope is close to what we used to simulate the data (1.5), and it therefore seems like the model has adequately estimated the mean within-group relationships.
-
-The estimated random-effect variance for `GroupID` is associated with a set of estimated intercepts for each level of the Group factor. These estimates are called *best linear unbiased predictors* (BLUPs), and can be extracted and used for example to produce plots.  
-
-```{r}
-coef(m)
-```
-
-
-```{r, fig.height=4, fig.width=4}
-newx = seq(min(x1), max(x1), length.out=200)
-
-plot(x1, y, las=1)
-for(i in 1:length(levels(groupID))){
-  y_hat = coef(m)$cond$groupID[i,1] + coef(m)$cond$groupID[i,2]*newx
-  lines(newx, y_hat, col=i)
-}
-```
-
-We can also use the predict function to make predictions for a specific level of the random effect.
-
-```{r}
-y_hat = predict(m, newdata=list(x1=newx, groupID=rep("Group5",200)), re.form=NULL)
-```
-
-EXERCISE: Fit a naïve linear model to the same data and evaluate how the two fitted models differ.
-
-### Data exercise: random-intercept models
-Pick any of the datasets we have worked with in the course that includes at least one grouping variable, and perform a random-intercept analysis (regression, ANCOVA or ANOVA). Produce relevant summary statistics and interpret the results biologically and statistically.
 
 ## Generalized linear mixed models
 Generalized linear mixed models extend linear mixed models in the same way that simple GLMs extend linear models. We can generally fit mixed-effect models with any common error distribution and link function, including binomial, Poisson and negative binomial errors. There are several packages for fitting such data, including the `glmmTMB` package we used above, and the `lme4` package. The syntax is very similar, and they tend to give very similar results for simple models.
