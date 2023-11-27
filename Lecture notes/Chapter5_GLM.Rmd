@@ -370,32 +370,63 @@ dat = read.csv("datasets/Eulaema.csv")
 head(dat)
 ```
 
+### Example analysis
+
+As an example, we will ask whether the local abundance of *Eulaema nigrita* depends on forest cover, while accounting for variation in yearly rainfall. We could write the analysis methods as follows:
+
+To assess the response of *Eulaema nigrita* to variation in forest cover, we fitted a generalized linear model with negative binomial error distribution (accounting for severe overdispersion) and a log link function. To account for the expected greater abundance of the study species in drier areas, we included mean-centered mean annual precipitation as a covariate in the model.
+
 ```{r}
-library(MASS)
-m = glm(Eulaema_nigrita~MAP+Pseason, fam="poisson", data=dat)
+dat$mcMAP = dat$MAP - mean(dat$MAP, na.rm=T)
+m = glm.nb(Eulaema_nigrita ~ mcMAP + forest., data = dat)
 summary(m)
+1- m$deviance/m$null.deviance
+```
 
-newMAP = seq(min(dat$MAP), max(dat$MAP), length.out=200)
-newPseason = rep(mean(dat$Pseason), 200)
+To interpret the parameter estimates, it is easiest to backtransform the predicted values for some relevant scenarios to the original count scale. Because MAP is mean-centered, the intercept corresponds to the the number of bees counted when forest cover i zero and MAP is set to its mean. Because forest cover ranges from 0 to 1, an one unit increase corresponds to the entire data range, and we can easily compute the predicted number of bees in a fully forested landscape by simply adding the forest-cover parameter estimate to the intercept.
 
-predvals = predict(m, newdata=list(MAP=newMAP, Pseason=newPseason), type="response")
+```{r}
+coefs = summary(m)$coef
+exp(coefs[1,1])
+exp(coefs[1,1] + coefs[3,1])
+```
 
-plot(dat$MAP, dat$Eulaema_nigrita)
-lines(newMAP, predvals, lwd=2)
+### Making predictions from multiple-regression models
 
-####
-m = glm.nb(Eulaema_nigrita~MAP+Pseason, data=dat)
-summary(m)
+To illustrate the response of *Eulaema nigrita* to local forest cover, while also representing the effect of rainfall, we plot the response curves for three different fixed values of mean annual precipitation.
 
-newMAP = seq(min(dat$MAP), max(dat$MAP), length.out=200)
-newPseason = rep(mean(dat$Pseason), 200)
+```{r, fig.height=4, fig.width=4}
+plot(dat$forest., dat$Eulaema_nigrita, col="grey", las=1,
+     xlab="Forest cover",
+     ylab="El. nigrita abundance")
 
-predvals = predict(m, newdata=list(MAP=newMAP, Pseason=newPseason), type="response")
+newforest = seq(min(dat$forest.), max(dat$forest.), length.out=200)
+newMAP = rep(mean(dat$mcMAP), length(newforest))
+y_hat = predict(m, newdata=list(mcMAP=newMAP, 
+                                forest.=newforest), 
+                type="response")
+lines(newforest, y_hat, lwd=2)
 
-plot(dat$MAP, dat$Eulaema_nigrita)
-lines(newMAP, predvals, lwd=2)
+newMAP2 = rep(mean(dat$mcMAP)+sd(dat$mcMAP), length(newforest))
+y_hat2 = predict(m, newdata=list(mcMAP=newMAP2, 
+                                forest.=newforest), 
+                type="response")
 
+newMAP3 = rep(mean(dat$mcMAP)-sd(dat$mcMAP), length(newforest))
+y_hat3 = predict(m, newdata=list(mcMAP=newMAP3, 
+                                forest.=newforest), 
+                type="response")
 
+lines(newforest, y_hat2, lwd=2, col="blue3")
+lines(newforest, y_hat3, lwd=2, col="firebrick")
+
+legend("topleft", lty=1, lwd=2, col=c(1, "blue3", "firebrick"), bty="n", 
+       legend=c("MAP = Mean",
+                "MAP = Mean + SD",
+                "MAP = Mean - SD"))
+
+abline(h=exp(coefs[1,1]), lty=2)
+abline(h=exp(coefs[1,1] + coefs[3,1]), lty=2)
 ```
 
 

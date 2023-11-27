@@ -92,8 +92,8 @@ VarAmongGroups/(VarAmongGroups+VarWithinGroups)*100
 To interpret the actual variances, we could e.g. scale the standard deviations by the trait mean to obtain a coefficient of variation (CV). To maintain the additivity of the variances, an even better approach is to scale the variances themselves by the square of the trait mean, thus obtaining a squared CV, $CV^2$. We scale by the square of the mean because variances also have squared units, and we thus obtain a unitless number.
 
 ```{r}
-CV2_Among = VarAmongGroups/mean(x1)^2
-CV2_Within = VarWithinGroups/mean(x1)^2
+CV2_Among = VarAmongGroups/mean(y)^2
+CV2_Within = VarWithinGroups/mean(y)^2
 CV2_Total = CV2_Among + CV2_Within
 ```
 
