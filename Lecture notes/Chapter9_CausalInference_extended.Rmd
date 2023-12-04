@@ -141,3 +141,42 @@ The `piecewiceSEM` package allows the component models to be for example GLM´s 
 EXERCISE: Repeat the analyses above for *Thalictrum alpinum* instead of *Carex*. 
 
 EXERCISE: Can you think of other potential models that can be tested? Are there other important environmental variables? Start by drawing the competing models as directed graphs (on paper). Fit and compare the models, and interpret the results.
+
+## Extra: Latent-variable SEM
+
+The traditional way
+
+```{r, fig.height=3, fig.width=7, message=F, warning=F}
+library(lavaan)
+library(semPlot)
+
+mod = '
+  Carex.bigelowii ~ snow + min_T_winter + soil_moist
+'
+
+lmod = sem(mod, data=plants)
+summary(lmod)
+
+par(mfrow=c(1,2))
+semPaths(lmod, what="diagram")
+semPaths(lmod, what="est")
+```
+
+Similarly we can fit our alternative model.
+
+```{r}
+mod2 = '
+  min_T_winter ~ snow
+  soil_moist ~ snow
+  Carex.bigelowii ~ min_T_winter + soil_moist
+'
+
+lmod2 = sem(mod2, data=plants)
+summary(lmod2, fit.measures=F)
+
+par(mfrow=c(1,2))
+semPaths(lmod2, what="diagram")
+semPaths(lmod2, what="est")
+```
+
+Like `piecewiseSEM`, the `lavaan` package provides a hypothesis test for the entire model.

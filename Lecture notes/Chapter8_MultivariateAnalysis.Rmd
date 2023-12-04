@@ -2,7 +2,7 @@
 title: "Processing and Analysis of Biological Data"
 subtitle: "A primer of multivariate analysis"
 author: "Øystein H. Opedal"
-date: "2 Dec 2022"
+date: "3 Dec 2023"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -18,20 +18,20 @@ Biological data are very often multivariate, in the sense that we are dealing wi
 
 ## Variance matrices and eigendecomposition
 
-Multivariate data can be summarized as *variance matrices*, which are symmetrical matrices with variances on the diagonal and covariances on the off-diagonals. We will work with the following example variance matrix $\textbf{CM}$.
+Multivariate data can be summarized as *variance matrices*, which are symmetrical matrices with variances on the diagonal and covariances on the off-diagonals. We will work with the following example variance matrix $\textbf{C}$.
 
 ```{r}
-cm = matrix(c(0.7, 0.2, -0.3,
+C = matrix(c(0.7, 0.2, -0.3,
               0.2, 1.2, 0.4,
               -0.3, 0.4, 0.6), 
               nrow=3)
-cm
+C
 ```
 
-EXERCISE: One way to confirm that a matrix is symmetrical is to show that it is identical to it´s transpose ($\textbf{A}=\textbf{A}^T$). Confirm that $\textbf{CM}$ is symmetrical. To transpose a matrix in R we can use the `t` function.
+EXERCISE: One way to confirm that a matrix is symmetrical is to show that it is identical to its transpose ($\textbf{A}=\textbf{A}^T$). Confirm that $\textbf{C}$ is symmetrical. To transpose a matrix in R we can use the `t` function.
 
 ```{r, echo=F}
-cm == t(cm)
+C == t(C)
 ```
 
 Correlations are standardized covariances, i.e. they are the covariances between standardized variables (mean = 0, sd = 1). We can compute the correlation between two variables as 
@@ -41,18 +41,23 @@ $Cor(x,y)=Cov(x,y)/\sqrt{Var(x)Var(y)}$.
 EXERCISE: Translate the covariance matrix into a correlation matrix.
 
 ```{r, echo=F}
-cov2cor(cm)
+cormat = matrix(NA, nrow=3, ncol=3)
+for(i in 1:3){
+  for(j in 1:3){
+    cormat[i,j] = C[i,j]/sqrt(C[i,i]*C[j,j])
+  }}
+round(cormat, 3)
 ```
 
 ### The multivariate normal distribution
 We can use a variance matrix to simulate data from the multivariate normal distribution $MVN(\bar{x}, \Sigma)$, where $\Sigma$ is a variance matrix.
 
-```{r, fig.height=4, fig.width=4}
+```{r, fig.height=4, fig.width=4, warning=F, message=F}
 library(MASS)
 library(ellipse)
 set.seed(1)
 
-X = data.frame(mvrnorm(200, mu=c(0,0,0), Sigma=cm))
+X = data.frame(mvrnorm(200, mu=c(0,0,0), Sigma=C))
 colnames(X) = c("z1", "z2", "z3")
 head(X)
 means = c(apply(X[,1:2], 2, mean))
@@ -60,7 +65,6 @@ means = c(apply(X[,1:2], 2, mean))
 plot(X$z1, X$z2, las=1)
 lines(ellipse(cov(X[,1:2]), centre=means))
 ```
-
 
 ## Eigendecomposition
 
@@ -83,7 +87,7 @@ In `R`, the function `eigen` performs the eigendecomposition and returns the eig
 \newpage
 
 ```{r}
-eigen(cm)
+eigen(C)
 ```
 The eigenvalues represent the amount of variance associated with each eigenvector (given in columns). We can thus compute the proportion of variance associated with each eigenvector as $\lambda_i/\sum\lambda$.
 
@@ -91,22 +95,21 @@ The eigenvalues represent the amount of variance associated with each eigenvecto
 plot(X$z1, X$z2, las=1, col="grey")
 lines(ellipse(cov(X[,1:2]), centre=means))
 arrows(means[1], means[2], 
-       means[1]+eigen(cm)$vectors[1,1], 
-       means[2]+eigen(cm)$vectors[2,1],
+       means[1]+eigen(C)$vectors[1,1], 
+       means[2]+eigen(C)$vectors[2,1],
        code=2, length=0.1, lwd=2)
 arrows(means[1], means[2], 
-       means[1]+eigen(cm)$vectors[1,2], 
-       means[2]+eigen(cm)$vectors[2,2],
+       means[1]+eigen(C)$vectors[1,2], 
+       means[2]+eigen(C)$vectors[2,2],
        code=2, length=0.1, lwd=2)
 ```
 
-
 Before continuing, we need to recall the rules for matrix multiplication. There are several forms of matrix multiplication, but the 'normal' matrix multiplication requires that the number of columns in the first matrix equals the number of rows in the second matrix, and the resulting matrix will have the same number of rows as the first matrix, and the same number of columns as the second matrix. If we multiply a matrix of dimensions $m \times n$ with one of dimensions $n \times l$, we get a matrix of dimensions $m \times l$. The matrix multiplication operator in `R` is `%*%`.
 
-EXERCISE: Compute the proportion of variance associated with each eigenvector of $\textbf{CM}$.
+EXERCISE: Compute the proportion of variance associated with each eigenvector of $\textbf{C}$.
 
 ```{r, echo=F}
-eigen(cm)$values/sum(eigen(cm)$values)
+eigen(C)$values/sum(eigen(C)$values)
 ```
 
 EXERCISE: Confirm that the eigenvectors are of unit length (length = 1) and that the angle between them is 90 degrees.
@@ -116,41 +119,41 @@ Recall that the length of a vector is the square root of the sum of the vector e
 Length of the eigenvectors
 
 ```{r, echo=F}
-apply(eigen(cm)$vectors, 2, function(x) sqrt(sum(x^2)))
+apply(eigen(C)$vectors, 2, function(x) sqrt(sum(x^2)))
 ```
 
 Angle between first and second eigenvector
 
 ```{r, echo=F}
-180/pi * acos(t(eigen(cm)$vectors[,1]) %*% eigen(cm)$vectors[,2])
+180/pi * acos(t(eigen(C)$vectors[,1]) %*% eigen(C)$vectors[,2])
 ```
 
 
-EXERCISE: Reconstruct the matrix $\textbf{CM}$ from the eigenvalues and eigenvectors.   
+EXERCISE: Reconstruct the matrix $\textbf{C}$ from the eigenvalues and eigenvectors.   
 
 ```{r, echo=F}
-cm
-eigen(cm)$vectors %*% diag(eigen(cm)$values) %*% solve(eigen(cm)$vectors)
+C
+eigen(C)$vectors %*% diag(eigen(C)$values) %*% solve(eigen(C)$vectors)
 ```
 
 ```{r, include=F}
-eigen(cm)$vectors[1:2, 1:2] %*% 
-diag(eigen(cm)$values)[1:2, 1:2] %*% 
-solve(eigen(cm)$vectors)[1:2, 1:2]
+eigen(C)$vectors[1:2, 1:2] %*% 
+diag(eigen(C)$values)[1:2, 1:2] %*% 
+solve(eigen(C)$vectors)[1:2, 1:2]
 ```
 
 
 ## Principal Component Analysis
 
-Eigenanalysis is a core component of principal component analysis. In it's simplest form, the principal components are the same as the eigenvectors. Let us derive some new traits along the eigenvectors of $\textbf{CM}$.
+Eigenanalysis is a core component of principal component analysis. In it's simplest form, the principal components are the same as the eigenvectors. Let us derive some new traits along the eigenvectors of $\textbf{C}$.
 
 ```{r}
 dim(as.matrix(X))
-dim(as.matrix(eigen(cm)$vectors[,1]))
+dim(as.matrix(eigen(C)$vectors[,1]))
 
-t1 = as.matrix(X) %*% eigen(cm)$vectors[,1]
-t2 = as.matrix(X) %*% eigen(cm)$vectors[,2]
-t3 = as.matrix(X) %*% eigen(cm)$vectors[,3]
+t1 = as.matrix(X) %*% eigen(C)$vectors[,1]
+t2 = as.matrix(X) %*% eigen(C)$vectors[,2]
+t3 = as.matrix(X) %*% eigen(C)$vectors[,3]
 
 c(var(X[,1]), var(X[,2]), var(X[,3]))
 c(var(t1), var(t2), var(t3))
@@ -176,7 +179,7 @@ The proportion of variance explained by each principal component is computed as 
 
 ```{r}
 pca$sdev^2/sum(pca$sdev^2)
-eigen(cm)$values/sum(eigen(cm)$values)
+eigen(C)$values/sum(eigen(C)$values)
 ```
 
 The small difference is again due to how the principal components are calculated, but biologically the interpretation is the same.

@@ -183,7 +183,7 @@ summary(m)
 There is now much less variance explained by population and patch. This is because a large portion of the variance is explained by the fixed predictor.
 
 ## Generalized linear mixed models
-Generalized linear mixed models extend linear mixed models in the same way that simple GLMs extend linear models. We can generally fit mixed-effect models with any common error distribution and link function, including binomial, Poisson and negative binomial errors. There are several packages for fitting such data, including the `glmmTMB` package we used above, and the `lme4` package. The syntax is very similar, and they tend to give very similar results for simple models.
+Generalized linear mixed models extend linear mixed models in the same way that simple GLMs extend linear models. We can generally fit mixed-effect models with any common error distribution and link function, including binomial, Poisson and negative binomial errors. There are several packages for fitting such models, including the `glmmTMB` package we used above, and the `lme4` package. The syntax is very similar, and they tend to give very similar results for simple models.
 
 The data on bee distribution in the Brazilian Atlantic forest were collected from sampling units (sites) belonging to 72 study areas. We can include study area (SA) as a random factor estimating variation in the mean abundance of bees across space.
 
@@ -191,7 +191,7 @@ The data on bee distribution in the Brazilian Atlantic forest were collected fro
 dat = read.csv("datasets/Eulaema.csv")
 dat$SA = as.factor(dat$SA)
 
-m = glmmTMB(Eulaema_nigrita~MAP + (1|SA), family="nbinom2", data=dat)
+m = glmmTMB(Eulaema_nigrita ~ MAP + (1|SA), family="nbinom2", data=dat)
 summary(m)
 ```
 
