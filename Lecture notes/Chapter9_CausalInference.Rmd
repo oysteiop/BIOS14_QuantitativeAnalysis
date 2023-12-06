@@ -29,19 +29,18 @@ plants = read.csv(file="datasets/alpineplants.csv")
 
 In its simplest form, a path analysis consists of a series of correlations combined with linear regressions fitted to standardized variables (zero mean, unit variance), thus obtaining *path coefficients*. Before going into technical aspects, a critical point is that before estimating any parameters, causal inference through path analysis or related methods requires formulating a graphical model in the form of a *directed graph* showing the assumed causal (and non-causal) relationships between a set of variables.
 
-As an example, we will consider two different models for how snow depth, minimum winter temperature and soil moisture affect the distribution and abundance of *Carex bigelowii*. In the first model, we will assume independent effects of each predictor, thus building a path model on the form
+As an example, we will consider two different models for how snow depth, minimum winter soil temperature and growing-season soil moisture affect the distribution and abundance of *Carex bigelowii*. In the first model, we will assume independent effects of each predictor, thus building a path model on the form
 
 $$snow \rightarrow Carex.bigelowii$$
 $$min.T.winter \rightarrow Carex.bigelowii$$
 $$soil.moist \rightarrow Carex.bigelowii$$
-An alternative model is that snow cover affects winter temperature and soil moisture, which is turn affects the plant.
+An alternative model is that snow cover affects winter soil temperature and growing-season soil moisture, which is turn affects the plant.
 
 $$snow \rightarrow soil.moist$$
 $$snow \rightarrow min.T.winter$$
 
 $$min.T.winter \rightarrow Carex.bigelowii$$
-$$snow \rightarrow Carex.bigelowii$$
-
+$$soil.moist \rightarrow Carex.bigelowii$$
 In path analysis, we call the response variables (with arrows coming into them) *endogeneous* variables, and the predictors (with arrows only going out of them) *exogeneous* variables.
 
 The first model can be fitted as a standard multiple regression, while the second model will involve fitting three different component models. Before fitting the models, we remove some `NA`s and *z*-transform all variables (including the response variables).
@@ -64,9 +63,9 @@ m2c = lm(Carex.bigelowii ~ min_T_winter + soil_moist, data=plants)
 summary(m1)
 ```
 
-The first model suggests positive but weakly supported effects of both snow cover and minimum winter temperature on the abundance of *Carex bigelowii*. Keep in mind though that snow cover and minimum winter temperature are strongly positively correlated, so that we may have some issues with multicollinearity in this model.
+The first model suggests positive but weakly supported effects of both snow cover and minimum winter temperature on the abundance of *Carex bigelowii*. Keep in mind though that snow cover and minimum winter soil temperature are strongly positively correlated, so that we may have some issues with multicollinearity in this model.
 
-EXERCISE: Draw (on paper) the path diagram corresponding to this model, and add the estimated path coefficients, including the correlations between the exogeneous (predictor) variables. We can calculate the unexplained variance ("U") in the response as $\sqrt{(1-r^2)}$ (which places it on the standardized [correlation] scale like the path coefficients). Interpret the results.
+EXERCISE: Draw (on paper) the path diagram corresponding to this model, and add the estimated path coefficients, including the (Pearson) correlations (function `cor` in `R`) between the exogeneous (predictor) variables. We can calculate the unexplained variance ("U") in the response as $\sqrt{(1-r^2)}$ (which places it on the standardized [correlation] scale like the path coefficients). Interpret the results.
 
 In this model we can calculate the total (net) effect of snow cover on the abundance of *Carex bigelowii* by summing the direct effect and the effects arising through correlations with other variables.
 
@@ -78,7 +77,7 @@ summary(m1)$coef[4,1]*cor(plants$snow, plants$soil_moist, "pairwise")
 cor(plants$snow, plants$Carex.bigelowii, "pairwise")
 ```
 
-In the second model, there is (as expected) a strong positive effect of snow cover on minimum winter temperature, and in turn a positive effect of winter temperature on *Carex bigelowii*. Thus, under this model, we have strong support for the hypothesized causal links from snow cover to *Carex* abundance.
+In the second model, there is (as expected) a strong positive effect of snow cover on minimum winter soil temperature, and in turn a positive effect of winter soil temperature on *Carex bigelowii*. Thus, under this model, we have strong support for the hypothesized causal links from snow cover to *Carex* abundance.
 
 EXERCISE: Draw the path diagram and interpret the direct and indirect effects of snow cover on *Carex* abundance.
 
@@ -89,8 +88,7 @@ summary(m2c)$coef
 ```
 
 ## Structural equation modelling
-
-Structural equation modelling is a further development of path analysis that offers greater flexibility compared to traditional path analysis. Below we fit our second candidate model using the `piecewiseSEM` package.
+Structural equation modelling is a further development that offers greater flexibility compared to traditional path analysis. Traditional structural equation models are estimated globally (in one go) based on a covariance matrix including all the candidate variables. An alternative approach is to build the SEM piecewise as a series of models fitted independently ("local estimation") and then combined. Below we fit our second candidate model using the second approach and the `piecewiseSEM` package.
 
 ```{r, fig.height=4, fig.width=4, message=F, warning=F}
 library(piecewiseSEM)
@@ -106,11 +104,9 @@ summary(m2)
 plot(m2)
 ```
 
-The `piecewiseSEM` package implements tests of so-called *directed separation* ("d-separation"), which is a test for conditional non-independence of variables. Here, the key test is if *Carex* abundance is really conditionally independent of snow cover, i.e. after we have accounted for winter temperature and soil moisture. The interpretation of these tests is different from what we are used to for normal models. In this case the null hypothesis is that the model represents the data well, and a low p-value therefore indicates *bad* model fit, while a higher p-value indicate decent fit to the data. However, as always, we need to interpret any result in light of the parameter estimates.
+Beyond simply fitting the component models, the `piecewiseSEM` package implements tests of so-called *directed separation* ("d-separation"), which is a test for conditional independence of variables. Here, the key test is if *Carex* abundance is really conditionally independent of snow cover, i.e. after we have accounted for winter soil temperature and growing-season soil moisture. The interpretation of these tests is different from what we are used to for normal models. In this case the null hypothesis is that our model represents the data well, and that adding an additional link (such as the one from snow cover directly to *Carex* abundance) would not improve the model sufficiently to be favoured. In this, a low p-value therefore indicates *bad* model fit, while a higher p-value indicate decent fit to the data. However, as always, we need to interpret any result in light of the parameter estimates.
 
-Note that for a SEM containing multiple components, the `piecewiseSEM` package also provides a hypothesis test for the entire model, again with a high p-value indicating a decent fit to the data.
-
-Note that the output of the current model includes a test of directed separation for the relationship between winter temperature and soil moisture, which was not our main interest in this case. We can avoid this by specifying an untested correlation between these variables, corresponding to double-headed arrows in our path analyses above, through the somewhat exotic `%~~%` operator.
+Note that for a SEM containing multiple of these "independence claims", the `piecewiseSEM` package also provides a hypothesis test for the entire model, again with a high p-value indicating a decent fit to the data. This test is based on comparing the likelihood of the current model to a saturated model including the missing paths. The output of the current model includes a test of directed separation for the relationship between winter temperature and soil moisture, which was not our main interest in this case, and we would like to treat this as an untested correlation (corresponding to double-headed arrows in our traditional path analysis above). We can achieve this through the somewhat exotic `%~~%` operator within the `psem` function.
 
 ```{r}
 m2b = psem(lm(soil_moist~snow, data=plants),
@@ -121,10 +117,11 @@ m2b = psem(lm(soil_moist~snow, data=plants),
 summary(m2b)
 ```
 
-The AIC values reported by the model summary is not simply the total AIC of the model, but is related to the difference in likelihood associated with the d-separation tests. It can be used to compare alternative models as long as these are nested, yet currently does not work for comparing saturated models (like our first candidate model) to a model with some missing paths (like our second candidate model). As an example, we formulate a third alternative model with different paths missing and compare it to our model 2 using AIC. Specifically, we omit the arrow from snow cover to soil moisture.
+### AIC model selection for structural equation models
+The AIC values reported by the model summary is the total AIC of the model, obtained by summing the AIC values of the component models (log likelihoods and thus AIC values are additive). We can use this to compare our chosen model to a null model (with nothing affecting nothing), or an alternative model with different sets of paths. As an example, we formulate a third alternative model with different paths missing and compare it to our model 2 using AIC. Specifically, we omit the arrow from soil moisture to *Carex* abundance.
 
 ```{r}
-m3 = psem(soil_moist~1,
+m3 = psem(lm(soil_moist~snow, data=plants),
           lm(min_T_winter~snow, data=plants),
           lm(Carex.bigelowii~min_T_winter, data=plants), 
           min_T_winter %~~% soil_moist,
@@ -136,8 +133,23 @@ summary(m3)
 AIC(m2b, m3)
 ```
 
+The second model (`m3`) is favoured because it has the lowest AIC value. 
+
 The `piecewiceSEM` package allows the component models to be for example GLM´s or mixed models, and is thus very flexible. 
 
 EXERCISE: Repeat the analyses above for *Thalictrum alpinum* instead of *Carex*. 
 
 EXERCISE: Can you think of other potential models that can be tested? Are there other important environmental variables? Start by drawing the competing models as directed graphs (on paper). Fit and compare the models, and interpret the results.
+
+```{r}
+m4 = psem(lm(min_T_winter~altitude + snow, data=plants),
+          lm(mean_T_summer~altitude + snow, data=plants),
+          lm(soil_moist~snow, data=plants),
+          lm(Thalictrum.alpinum~min_T_winter+mean_T_summer, data=plants), 
+          altitude %~~% snow,
+          min_T_winter %~~% soil_moist,
+          min_T_winter %~~% mean_T_summer,
+          soil_moist %~~% mean_T_summer,
+          data=plants)
+```
+

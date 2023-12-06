@@ -129,7 +129,7 @@ Angle between first and second eigenvector
 ```
 
 
-EXERCISE: Reconstruct the matrix $\textbf{C}$ from the eigenvalues and eigenvectors.   
+EXERCISE: Reconstruct the matrix $\textbf{C}$ from the eigenvalues and eigenvectors. Hint: To get the inverse of a matrix, we can use the `solve` function.   
 
 ```{r, echo=F}
 C
@@ -218,16 +218,17 @@ summary(m0)
 
 We then perform a principal component analysis, extract the three principal components, and fit a second linear models with the PCs as predictors.
 
-```{r}
+```{r, fig.height=4, fig.width=4}
 pca = princomp(XX)
+biplot(pca, col=c("grey", "black"), cex=c(.5, 1))
+```
+
+```{r}
 pc1 = pca$scores[,1]
 pc2 = pca$scores[,2]
 pc3 = pca$scores[,3]
 
 m3 = lm(y~pc1+pc2+pc3)
-```
-
-```{r}
 summary(m3)
 ```
 
