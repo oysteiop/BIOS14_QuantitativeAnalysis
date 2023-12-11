@@ -114,7 +114,7 @@ eigen(C)$values/sum(eigen(C)$values)
 
 EXERCISE: Confirm that the eigenvectors are of unit length (length = 1) and that the angle between them is 90 degrees.
 
-Recall that the length of a vector is the square root of the sum of the vector elements, and the angle between two vectors $u_1$ and $u_2$ is $\frac{180}{\pi}cos^{-1}(u_1u_2)$.
+Recall that the length of a vector is the square root of the sum of the squared vector elements, and the angle between two vectors $u_1$ and $u_2$ is $\frac{180}{\pi}cos^{-1}(u_1u_2)$.
 
 Length of the eigenvectors
 
