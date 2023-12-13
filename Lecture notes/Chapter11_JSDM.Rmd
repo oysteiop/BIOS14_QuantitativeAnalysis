@@ -2,7 +2,7 @@
 title: "Processing and Analysis of Biological Data"
 subtitle: "Joint Species Distribution Modelling"
 author: "Øystein H. Opedal"
-date: "14 Dec 2022"
+date: "12 Dec 2023"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -11,8 +11,9 @@ pandoc_args: ["--wrap=none"]
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
 ## Introduction
-In community ecology, chemical ecology and many other sub-fields, data are often multivariate in comprising e.g. many species or many chemical compounds. Traditionally, these data have normally been analysed by ordination methods such as principal component analysis, (detrended) correspondence analysis, redundancy analysis or non-metric multidimensional scaling (NMDS). Recently however, there has been an explosive development of model-based approaches falling into the category of "joint models". In this chapter we will consider such joint models applied to multivariate data on species communities, thus fitting *joint species distribution models*.
+In community ecology, chemical ecology and many other sub-fields, data are often multivariate in comprising e.g. many species or many chemical compounds. Traditionally, these data have normally been analysed by ordination methods such as principal component analysis, (detrended) correspondence analysis, redundancy analysis, non-metric multidimensional scaling (NMDS) etc. Recently however, there has been an explosive development of model-based approaches falling into the category of "joint models". In this chapter we will consider such joint models applied to multivariate data on species communities, thus fitting *joint species distribution models*.
 
 ## The HMSC framework
 Hierarchical Modelling of Species Communities (Hmsc) is a conceptual framework for analysis of community-ecological data, currently implemented in the Bayesian framework in the `R` package `Hmsc`. For a complete introduction to the framework, have a look at the paper 
@@ -23,7 +24,7 @@ In the following sections, we will go through the basics of model fitting and in
 
 ## Model fitting
 
-When fitting models with Bayesian inference, the model fitting can take a long time and is always performed separately from subsequent postprocessing. First, we read in and format the data files.
+When fitting models with Bayesian inference, the model fitting can take a long time and is always performed separately from subsequent postprocessing. First, we read in and format a set of datafiles that we will use in the analysis.
 
 ```{r}
 Y = read.csv(file="datasets/euglossini/Y.csv")
@@ -40,18 +41,23 @@ dfPi$SA = as.factor(dfPi$SA)
 dfPi$SU = as.factor(dfPi$SU)
 ```
 
-After reading the data, it is good to check that all the data comonents have the same number of samples and species. For example, the predictor variables (`XData`) should have as many rows as the response variables (`Y`).
+After reading the data, it is good to check that all the data components have the same number of samples and species. For example, the predictor variables (`XData`) should have as many rows as the response variables (`Y`).
+
+```{r}
+dim(Y)
+dim(XData)
+```
+
+Similarly, the trait data (`TrData`) should have as many species as the response data (`Y`).
 
 ```{r}
 dim(Y)
 dim(TrData)
-dim(XData)
-dim(dfPi)
 ```
 
-Next, we proceed to set up our model. In the current model we will fit two hierarchical random factors, study area (SA) and sampling unit (SU).
+Next, we proceed to set up our model. In the current model we will fit two hierarchical random factors, study area (SA) and sampling unit (SU). The sampling units correspond to the rows in the dataset. While in a univariate model we would usually not include a random effect with no replication within each level, in a joint model this makes sense because we have several (many) species sampled in the same sampling units, and we want to model the non-independence of these.
 
-```{r}
+```{r, message=F, warning=F}
 library(Hmsc)
 rL1 = HmscRandomLevel(units = unique(dfPi$SA))
 rL2 = HmscRandomLevel(units = unique(dfPi$SU))
@@ -68,7 +74,7 @@ XFormula = ~ method + effort + altitude + MAT + MAP + Tseason + Pseason +
 TrFormula= ~genus
 ```
 
-Now, we are ready to set up the model object. We will fit a presence-absence model, which means that we only ask whether a species is present (1) or absent (0) in each sample. We therefore choose a binomial model with a *probit* link function (recall that the probit link is very similar to the logit link, but works better in the context of Bayesian model fitting).
+Now, we are ready to set up the model. We will fit a presence-absence model, which means that we only ask whether a species is present (1) or absent (0) in each sample. We therefore choose a binomial model with a *probit* link function (recall that the probit link is very similar to the logit link, but works better in the context of Bayesian model fitting).
 
 ```{r}
 m1 = Hmsc(Y = as.matrix((Y>0)*1), 
@@ -79,11 +85,11 @@ m1 = Hmsc(Y = as.matrix((Y>0)*1),
           ranLevels = list(SA=rL1, SU=rL2))
 ```
 
-The next step is to set the sampling parameters and run the MCMC sampling.
+The next step is to set the sampling parameters and run the MCMC sampling. The chain below will run for a total of 15000 iterations, with the first 5000 discarded as a transient, and one sample taken every 10th iteration after this initial "burn-in period". Because the sampling takes a long time, we save the model object once the sampling is done.
 
 ```{r, eval=F}
 thin = 10
-samples = 1000
+samples = 10
 adaptNf = ceiling(0.4*samples*thin)
 transient = ceiling(0.5*samples*thin)
 nChains = 2
@@ -115,7 +121,7 @@ psrf = gelman.diag(mpost$Beta, multivariate=FALSE)$psrf
 summary(psrf)
 ```
 
-Next, we assess the explanatory power of the model.
+Next, we assess the explanatory (discriminatory) power of the model, as quantified by the coefficient of discrimination (`TjurR2`) and the area under curve (`AUC`) statistic (a common measure of model performance in presence-absence model, for which 0.5 means the model is just as good as expected by chance, and 1 means the model is very good).
 
 ```{r}
 predY = computePredictedValues(m1, expected=T)
@@ -143,27 +149,38 @@ lines(-1000:1000, -1000:1000)
 #cor(rowSums(predYm), rowSums(m1$Y))^2
 ```
 
+## Variance partitioning
+The `Hmsc` package has a build-in function for performing variance partitioning for the fixed and random parts of the model.
 
-```{r, eval=F, include=F, warning=F}
+```{r, eval=T, include=T, warning=F}
 group = c(rep(1,3), 2, rep(3,1) ,rep(4,4), rep(5,1), rep(6,1))
 cbind(m1$covNames, group)
 
 groupnames = c("Baiting method", "Effort", "Altitude", "Climate", "Forest cover", "Landuse heterogeneity")
 VP = computeVariancePartitioning(hM = m1, group = group, groupnames = groupnames)
+#VP$vals = VP$vals[,rev(order(colSums(VP$vals[1:6,])))]
+```
 
-VP$vals = VP$vals[,rev(order(colSums(VP$vals[1:6,])))]
+```{r, fig.height=5, fig.width=10}
+leg = c(VP$groupnames, m1$rLNames)
+par(mar=c(8,4,2,10), xpd=T)
+bp = barplot(VP$vals, xlab = "", ylab = "Variance proportion", 
+        las = 1, col=grey.colors(8), xaxt="n")
+axis(1, at=bp, labels=F)
+legend(75, 1, leg, pch=15, col=grey.colors(8))
+text(bp, -0.06, srt = 45, adj = 1,cex=.7,
+     labels = gsub("_", " ", m1$spNames), xpd = TRUE)
 ```
 
 ## Extracting parameter estimates
-
 The HMSC model includes a lot of parameters, and it rarely makes sense to report all of them in a table (at least not in the main text). One option is to plot the matrix of parameter estimates (or their support, as in the example below).
 
 ```{r, fig.width=5, fig.height=8}
 pbeta = getPostEstimate(m1, "Beta")
 
-plotBeta(m1, post=pbeta, param = "Support", covOrder="Vector", covVector=c(2:11), supportLevel = .95,
-         SpeciesOrder = "Vector", SpVector = 1:58, spNamesNumbers=c(F,T), covNamesNumbers = c(T,F))
-
+plotBeta(m1, post=pbeta, param = "Support", covOrder="Vector", covVector=c(2:11), 
+         supportLevel = .95, SpeciesOrder = "Vector", SpVector = 1:58, 
+         spNamesNumbers=c(F,T), covNamesNumbers = c(T,F))
 ```
 
 Because there are so many parameters, it can also be useful to summarize the results across species by plotting e.g. a covariate against the predicted species richness.
