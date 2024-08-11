@@ -1,8 +1,8 @@
 ---
 title: "Processing and Analysis of Biological Data"
-subtitle: "Preface and summary statistics"
-author: "Øystein H. Opedal"
-date: "3 Nov 2023"
+subtitle: "Chapter 1. Preface and summary statistics"
+author: "Øystein H. Opedal, Department of Biology, Lund University"
+date: "`r Sys.Date()`"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -13,58 +13,57 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Preface
-
-These lectures notes are written for the course BIOS14 at Lund University. They will cover what I consider to be necessary (or at least useful) knowledge of data analysis and quantitative methods in ecology, evolutionary biology, and related fields. This document is work-in-progress and is not comprehensive. I therefore strongly encourage the reader to consult the many excellent text books available on 'biostatistics', R, quantitative biology etc.
+These lectures notes are written for the course BIOS14 at Lund University. They will cover what I consider to be necessary (or at least useful) knowledge of data analysis and quantitative methods in ecology, evolutionary biology, and related fields. This document is work-in-progress and is not comprehensive. I therefore strongly encourage you to consult the many excellent text books available on "biostatistics", `R`, quantitative biology etc.
 
 Beyond these lecture notes, the main course literature is the book 
 
 Gerry P Quinn and Michael J Keough. 2002. Experimental Design and Data Analysis for Biologists, Cambridge University Press, ISBN: 9780521009768.
 
-Like most biostatistics texts this is a reference in which to look up specific topics, rather than a book to be read chapter by chapter. Personally I have also found Michael Crawleys´ brick 'The R Book' useful in the past, it's as much a statistics text as an R text.
+Like most biostatistics texts this is a reference in which to look up specific topics, rather than a book to be read chapter by chapter. Personally I have also found Michael Crawleys' brick "The R Book" useful in the past, it's as much a statistics text as an `R` text.
 
-What separates this document (and this course) from 'typical' texts in biostatistics is the limited focus on statistical hypothesis testing. Though we will discuss key aspects of hypothesis testing in the traditional sense, focus will be throughout on quantification, parameter estimation, and biological interpretation of results. This choice is made in an attempt to mitigate an issue that occurs frequently in scientific writing, namely that the presentation of results in biological publications has increasingly tended towards a focus on statistical hypothesis testing (‘significance testing’), at the cost of focus on the biological significance of any result obtained. An example is sentences on the form ‘the treatment significantly (P < 0.05) affected the growth of plants’ in place of an appropriate sentence such as ‘plants in the high-fertilizer treatment grew 40% larger than those in the low-fertilizer treatment’. There is now a growing focus on turning this trend (Wasserstein & Lazar 2016), and this must start with the way statistics are taught in biostatistical courses such as this one.
+What separates this document (and this course) from "typical" texts in biostatistics is the limited focus on statistical hypothesis testing. Although we will discuss key aspects of hypothesis testing in the traditional sense, focus will be throughout on quantification, parameter estimation, and biological interpretation of results. This choice is made in an attempt to mitigate an issue that occurs frequently in scientific writing, namely that the presentation of results in biological publications has increasingly tended towards a focus on statistical hypothesis testing ("significance testing"), at the cost of focus on the biological significance of any result obtained. An example is sentences on the form "the treatment significantly (P < 0.05) affected the growth of plants" in place of an appropriate sentence such as "plants in the high-fertilizer treatment grew 40% larger than those in the low-fertilizer treatment". There is now a growing focus on turning this trend (e.g. Wasserstein & Lazar 2016), and this must start with the way statistics are taught in biostatistics courses such as this one.
 
 Wasserstein, R. L., and N. A. Lazar. 2016. The ASA Statement on p-Values: Context, Process, and Purpose. The American Statistician 70: 129-133.
 
-Beyond quantification and data analysis, the following chapters will also introduce some basic data handling, scientific programming, and graphics. These skills are by now essential for most practicing researchers, and I like to think the skills will be useful also for those that put their Biology education to use outside of academia.
+Beyond quantification and data analysis, the following chapters will also introduce some basic data handling, scientific programming, and graphics. These skills are by now essential for most practicing researchers, and I like to think the skills will be useful also for those that put their Biology education to use outside of academia. To understand the importance of quantification and biological interpretation in Biology, we will start with a brief introduction to measurement theory.
 
 ## Measurement and meaning in biology
+Measurement theory is concerned with the relationship between measurements and the theoretical context in which they will function. In other words, what are the numbers we record meant to represent? The title of this section is shared with an important paper published in 2011 by evolutionary biologist David Houle and colleagues, in which they pointed out the common disconnect in Biology between the measurements taken in the field or laboratory, and the biological properties they are meant to represent. This exemplifies a more general problem across Biology, where the interpretation of measurements and analyses fails to focus on the biological questions that motivated the study in the first place. Before reading on, I strongly suggest to read at least the first pages of Houle et al. 2011, to get a grasp of the problem at hand.
 
-Measurement theory is concerned with the relationship between measurements and the theoretical context in which they will function. In other words, what are the numbers we record meant to represent? The title of this section is shared with an important paper published in 2010 by evolutionary biologist David Houle and colleagues, in which they pointed out the common misconnect in biology between the measurements taken in the field or laboratory, and the biological properties they are meant to represent. This exemplifies a more general problem across biology, where the interpretation of measurements and analyses fails to focus on the biological questions that motivated the study in the first place. Before reading on, I strongly suggest to read at least the first pages of Houle et al. 2010, to get a grasp of the problem at hand.
+Houle, D., C. Pélabon, G. P. Wagner, & T. F. Hansen. 2011. Measurement and meaning in biology. Quarterly Review of Biology 86:3-34.
 
 ### Scale types and transformations
-
-The concept of scale types has rarely been taught in biology, yet any quantitative measurement is placed on a specific scale type, with some associated properties such as permissible transformations. The perhaps most familiar scale type is the *ratio scale*, represented for example by any linear size measurement (with units such as *mm* or *m*). Importantly, the ratio scale has a natural zero, and negative values do not occur. 
+The concept of scale types has rarely been taught in biology, yet any quantitative measurement is placed on a specific scale type, with some associated properties such as permissible transformations. The perhaps most familiar scale type is the *ratio scale*, represented for example by any linear size measurement (with units such as *mm* or *m*). Importantly, the ratio scale has a natural zero, and negative values do not occur.
 
 In contrast, consider the measurement of days since January 1st (often used to record for example breeding dates of birds). Dates are on an *interval scale*, and lacks a natural zero (i.e., the zero is chosen arbitrarily). This has consequences, for example, for how we compare raw and proportional variances among groups (see below). On this topic, it is common to see the number of days since January 1st labelled as a 'Julian date'. I write this on the 20th of October 2022, and the Julian date is 22293 (the number of days since the beginning of the Julian period).
 
 A third common scale type in biology is the *ordinal scale*, where measurements are in order (e.g. 2 is larger than 1), but the intervals between values are not fixed (i.e. the difference between 1 and 2 may differ from the difference between 2 and 3). Examples include where species are scored within a plot as "dominant", "common", "rare", and "very rare". Most will agree that "common" > "rare", but it does not make sense to translate these categories into numerical values (e.g. 4 for "dominant", 3 for "common" etc.) and then compute the mean.
 
-When measurements are categories (e.g. red vs. blue vs. green), they are on a *nominal scale*.
+When measurements are unordered categories (e.g. red vs. blue vs. green), they are on a *nominal scale*.
 
 ## Summary statistics
 Before departing on any data analysis, it is advisable to explore the data at hand both graphically, and by obtaining relevant summary statistics. Summary statistics are those that aim to describe the properties of the data. For example, the central tendency of a dataset is generally measured by the arithmetic mean (typically denoted $\mu$ or $\bar{x}$), median, or, less frequently, the mode. Which of these to choose depends in part on the distribution of the data. If the data are skewed (tendency towards large or small values), the mean can give a misleading picture of the central tendency. The same issue arises if there are extreme values (outliers) that will tend to affect the mean much more than they affect the median. In some cases, a good option can be to report both the mean and the median, which together will give a more complete impression of the data distribution. For ordinal or nominal variables, the mode may be a suitable option.
 
 Another measure of central tendency that buffers the influence of large values is the geometric mean $(\Pi_{i=1}^n x_i)^\frac{1}{n}$. The geometric mean is equal to the exponent of the mean of the natural logs of the data. The geometric mean increases towards the arithmetic mean (here 20, solid line) with decreasing variance in the data. The slight scatter in the plot below arises from the use of a randomly generated dataset to generate each datapoint.
 
-```{r, fig.height=4, fig.width=4, echo=F, fig.cap="Relationship between arithmetic (solid line) and geometric mean with increasing variance in the data"}
+```{r, fig.height=4, fig.width=4, echo=F, fig.cap="Relationship between arithmetic (20, solid line) and geometric mean with increasing variance in the data"}
 out = NULL
 sdvals = seq(0, 10, 0.1)
 
 for(i in 1:length(sdvals)){
-d = rnorm(10000, 20, sd=sdvals[i])
+d = rnorm(100000, 20, sd=sdvals[i])
 d = d[which(d>0)]
 out[i] = exp(mean(log(d)))
 }
 
 plot(sdvals, out, las=1,
-     xlab="SD", ylab="Geometric mean")
+     xlab="Standard deviation", ylab="Geometric mean")
 abline(h=20)
 ```
 
-One application of the geometric mean in biology is the evaluation of the long-term success of a given (evolutionary) strategy, such as the fitness consequences of variance-reducing strategies such as bet-hedging. A bet-hedging strategy is sometimes defined as one that maximizes the geometric rather than arithmetic mean fitness (by reducing e.g. the among-year variance in reproductive success).
+One common application of the geometric mean in biology is the evaluation of the long-term success of a given (evolutionary) strategy, such as the fitness consequences of variance-reducing strategies such as bet-hedging. A bet-hedging strategy is sometimes defined as one that maximizes the geometric rather than arithmetic mean fitness (by reducing e.g. the among-year variance in reproductive success).
 
-Variation in the data is typically described by the variance (typically denoted $\sigma^2$) or its square root, the standard deviation ($\sqrt{\sigma^2} = \sigma$). As pointed out by R. A. Fisher, the advantage of the variance (mean squared deviation from the mean) is that variance components are additive, allowing us to partition the total variance in the data into different components (see more on Variance partitioning below). To understand why square values are additive, recall Pythagoras theorem 
+Variation in the data is typically described by the variance (typically denoted $\sigma^2$) or its square root, the standard deviation ($\sqrt{\sigma^2} = \sigma$). As pointed out by R. A. Fisher, the advantage of the variance (mean squared deviation from the mean) is that variance components are additive, allowing us to partition the total variance in the data into additive components (see more on Variance partitioning below). To understand why square values are additive, recall Pythagoras theorem 
 
 $c^2 = a^2 + b^2$, but $c \ne a + b$. 
 
@@ -84,7 +83,7 @@ which is sometimes misinterpreted or even mistyped by the journal typesetter as
 
 $CV = \sqrt{\frac{\sigma^2}{\mu}}$.
 
-Another method for placing data on a proportional scale is taking natural logarithms. The standard deviation of a log-transformed variable is very similar to the standard deviation on arithmetic scale divided by the trait mean (the $CV$), as long as the variance is much smaller than the mean.
+Another method for placing data on a proportional scale is taking natural logarithms. The standard deviation of a log-transformed variable is very similar to the standard deviation on arithmetic scale divided by the trait mean (i.e. the $CV$), as long as the variance is much smaller than the mean.
 
 Another way to see the nice proportional properties of the log-scale is to recall that $log(\frac{a}{b}) = -log(\frac{b}{a})$
 
@@ -93,10 +92,9 @@ log(1.1/1)
 -log(1/1.1)
 ```
 
-Note also that when $a$ (1.1) is 10% larger than $b$ (1.0), the *log ratio* is ~0.1. Recall that $log(\frac{a}{b}) = log(a) - log(b)$, and thus differences on log scale multiplied by 100 are roughly interpretable as difference in percent (when $a$ and $b$ are not very different). Log ratios are therefore often good measures of effect size.
+Note also that when $a$ (1.1) is 10% larger than $b$ (1.0), the *log ratio* is ~0.1. Recall that $log(\frac{a}{b}) = log(a) - log(b)$, and thus differences on log scale multiplied by 100 are roughly interpretable as difference in percent (when $a$ and $b$ are not very different). Log ratios are therefore often good measures of *effect size*.
 
 ### Simulating data from statistical distributions
-
 Throughout this course we will use simulated data to illustrate concepts and ideas, and to understand how statistical models work. `R` has built-in functions for simulating data from many statistical distributions, including the normal distribution. The function `rnorm()` takes three main arguments, the number of samples `n`, the mean, and the standard deviation `sd`.
 
 ```{r, fig.height=4, fig.width=4}
@@ -119,7 +117,9 @@ x = rnorm(50, 10, 2)
 se_x = sqrt(var(x)/length(x))
 ```
 
-We will do a non-parametric bootstrap, where we resample the data many times. For each resampling, we maintain the original sample size (here 50), but we draw from the data with replacement, so that by chance some values will be sampled several times and others not at all. Before running the *for*-loop, we have to define the variable `out` that we will use to store the results for each iteration of our loop.
+We will do a non-parametric bootstrap, where we resample the data many times. For each resampling, we maintain the original sample size (here 50), but we draw from the data with replacement, so that by chance some values will be sampled several times and others not at all. Before running the *for*-loop, we have to define the variable (here called `out`) that we will use to store the results for each iteration of our loop.
+
+To understand the liens of code below, recall that you can access the help file for any `R` function by typing `?function`, here e.g. `?sample` to see which arguments can be passed to the `sample` function, and what their defailt values are. When you are new to `R`, you may have to look up the arguments for every function, but soon you will learn the basics of many functions and it will get easier.
 
 ```{r}
 out = NULL
@@ -129,7 +129,7 @@ for(i in 1:1000){
 }
 ```
 
-The variable `out` now contains what we can call the *sampling distribution* of the mean of $x$. The standard deviation of the sampling distribution gives an approximation of the standard error.
+The variable `out` now contains what we can call the *sampling distribution* of the mean of $x$. The standard deviation of the sampling distribution gives an approximation of the standard error (and this is very different from the standard deviation of the original data!).
 
 ```{r, fig.width=4, fig.height=4}
 hist(out, las=1, main="")
@@ -156,9 +156,9 @@ qnorm(c(0.025, 0.975))
 ```{r, fig.height=4, fig.width=4, echo=F, fig.cap="Density of the standard normal distribution, with veritical lines illustrating 95% of the distribution"}
 xx = seq(-3, 3, length.out=200)
 yy = dnorm(xx)
-plot(xx,yy, type="l", las=1, xlab="z-score", ylab="Density")
-abline(v=-1.96)
-abline(v=1.96)
+plot(xx, yy, type="l", las=1, xlab="z-score", ylab="Density")
+abline(v=qnorm(0.025))
+abline(v=qnorm(0.975))
 ```
 
 ```{r}
@@ -166,7 +166,7 @@ mean(x) - 1.96*se_x
 mean(x) + 1.96*se_x
 ```
 
-EXERCISE: Use non-parametric bootstrapping to derive a 95% confidence interval for the CV of $x$. Start by writing a function that computes the CV for a variable (see the Appendix for a brief introduction to writing functions in `R`.
+EXERCISE: Use non-parametric bootstrapping to derive a 95% confidence interval for the CV of a variable. Start by writing a function that computes the CV for a variable (see the Appendix for a brief introduction to writing functions in `R`). Then, simulate a random variable and write a loop that samples many times from this variable and computes the CV.
 
 ### Optional exercise: The proportional properties of the natural log
 Use simulated data to show the close relationship between the SD of log-transformed data and the $CV$ on arithmetic scale. You may need e.g. the `rnorm` function and a *for*-loop to achieve this. One strategy would be to start with comparing the two values for a single case, then build a matrix to hold the paired values, and finally use a *for*-loop to populate the matrix. See Appendix 1 for help to get started with programming. The following figure illustrates the kind of pattern we expect.

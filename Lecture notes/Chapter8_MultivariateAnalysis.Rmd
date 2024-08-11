@@ -1,8 +1,8 @@
 ---
 title: "Processing and Analysis of Biological Data"
-subtitle: "A primer of multivariate analysis"
-author: "Øystein H. Opedal"
-date: "3 Dec 2023"
+subtitle: "Chapter 8. A primer of multivariate analysis"
+author: "Øystein H. Opedal, Department of Biology, Lund University"
+date: "`r Sys.Date()`"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -114,7 +114,7 @@ eigen(C)$values/sum(eigen(C)$values)
 
 EXERCISE: Confirm that the eigenvectors are of unit length (length = 1) and that the angle between them is 90 degrees.
 
-Recall that the length of a vector is the square root of the sum of the squared vector elements, and the angle between two vectors $u_1$ and $u_2$ is $\frac{180}{\pi}cos^{-1}(u_1u_2)$.
+Recall that the length of a vector is the square root of the sum of the squared vector elements, and the angle between two unit-length vectors $u_1$ and $u_2$ is $\frac{180}{\pi}cos^{-1}(u_1u_2)$.
 
 Length of the eigenvectors
 

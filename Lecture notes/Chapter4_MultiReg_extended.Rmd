@@ -1,8 +1,8 @@
 ---
 title: "Processing and Analysis of Biological Data"
-subtitle: "The Linear Model III: Multiple regression and ANCOVA"
-author: "Øystein H. Opedal"
-date: "8 Nov 2023"
+subtitle: "Chapter 4. The Linear Model III: Multiple regression and ANCOVA"
+author: "Øystein H. Opedal, Department of Biology, Lund University"
+date: "`r Sys.Date()`"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -13,12 +13,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Multiple regression
+Linear models are easily extendable to multiple predictor variables. If there are several continuous predictors, the analysis is called a multiple-regression analysis. Multiple regression has some very useful properties. For example, the parameter estimates represent the *marginal effect* of each predictor, that is the effect of the predictor when all other variables in the model are held constant at their mean. This allows us to evaluate the independent effects of several, potentially correlated, variables (asking for example which have the stronger effect on the response variable), or to "control for" some nuisance variables (say, sampling effort).
 
-Linear models are easily extendable to multiple predictor variables. If there are several continuous predictors, the analysis is called a multiple-regression analysis. Multiple regression has some very useful properties. For example, the parameter estimates represent the *marginal effect* of each predictor, that is the effect of the predictor when all other variables in the model are held constant at their mean. This allows us to evaluate the independent effects of several, potentially correlated, variables (asking for example which have the stronger effect on the response variable), or to 'control for' some nuisance variables (say, sampling effort).
-
-We can also include a mixture of continuous and categorical variables in a model, in which case we technically perform an analysis of covariance (more below).
-
-The following code simulates data with two correlated predictor variables and fits a multiple-regression model.
+We can also include a mixture of continuous and categorical variables in a model, in which case we technically perform an analysis of covariance (more below). The following code simulates data with two correlated predictor variables, fits a multiple-regression model, and extracts the parameter estimates.
 
 ```{r}
 set.seed(187)
@@ -27,17 +24,14 @@ x2 = 0.5*x1 + rnorm(200, 0, 4)
 y = 0.7*x1 + 2.2*x2 + rnorm(200, 0, 4)
 
 m = lm(y~x1+x2)
-
 coefs = summary(m)$coef
 ```
-
-\newpage
 
 ```{r}
 summary(m)
 ```
 
-First, note that the coefficient of determination ($r^2$) of the model is 0.868, which means as before that 86.8% of the variance in $y$ is explained. As before, we can see why this is the case by computing the variance in the predicted values $\hat{y}$, $V(\hat{y}) = V(X\beta)$, and then divide this by the total variance in the response variable $V(y)$.
+First, note that the coefficient of determination ($r^2$) of the model is `r round(summary(m)$r.sq, 3)`, which means as before that `r round(summary(m)$r.sq*100, 1)`% of the variance in $y$ is explained. As before, we can see why this is the case by computing the variance in the predicted values $\hat{y}$, $V(\hat{y}) = V(X\beta)$, and then divide this by the total variance in the response variable $V(y)$. To compute the variance in the predicted values, we use as always the equation for the linear model we fitted.
 
 ```{r}
 y_hat = coefs[1,1] + coefs[2,1]*x1 + coefs[3,1]*x2
@@ -45,7 +39,7 @@ var(y_hat)
 var(y_hat)/var(y)
 ```
 
-This is the total variance explained by the model. Now what about the variance explained by each of the predictors $x_1$ and $x_2$? To compute the predicted values associated only with $x_1$, we keep $x_2$ constant at its mean, and *vice versa* for the variance associated with $x_2$.
+This is the total variance explained by the model. Now what about the variance explained by each of the predictors $x_1$ and $x_2$? To compute the predicted values associated only with $x_1$, we keep $x_2$ constant at its mean, and *vice versa* for the variance associated with $x_2$. Note that even if we keep one of the predictors constant, it still needs to be included in the equation for the predicted values (but with the same value - its mean - for all observations).
 
 ```{r}
 y_hat1 = coefs[1,1] + coefs[2,1]*x1 + coefs[3,1]*mean(x2)
@@ -58,6 +52,8 @@ y_hat2 = coefs[1,1] + coefs[2,1]*mean(x1) + coefs[3,1]*x2
 var(y_hat2)
 var(y_hat2)/var(y)
 ```
+
+Let's now compute the sum of the variance explained by $x_1$ and $x_2$, and compare it to our previous estimate of the variance explained by the full model.
 
 ```{r}
 var(y_hat)
@@ -72,19 +68,21 @@ $Var(x+y) = Var(x) + Var(y) + 2Cov(x,y)$.
 var(y_hat1) + var(y_hat2) + 2*cov(y_hat1, y_hat2)
 ```
 
-As before, we can also do this by computing $V(x) = \beta_x^2\sigma_x^2$.
+This shows that, when we have correlated predictors, the covariance between them also explain some of the variance.
+
+As before, we can also compute the explained variance directly from the parameter estimates and the variances of the predictors: $V(x) = \beta_x^2\sigma_x^2$.
 
 ```{r}
 coefs[2,1]^2*var(x1)
 ```
 
-To include the covariance between the predictors, we can do this in matrix notation $V(\hat{y}) = \mathbf{\hat{\beta^T}S\hat{\beta}}$, where $\hat{\beta}$ is a vector of parameter estimates (slopes), $\mathbf{S}$ is the covariance matrix for the predictors, and $^T$ means transposition.  Recall the `R` matrix multiplication operator `%*%`.
+To include the covariance between the predictors, we can do this in matrix notation $V(\hat{y}) = \mathbf{\hat{\beta^T}S\hat{\beta}}$, where $\hat{\beta}$ is a vector of parameter estimates (slopes), $\mathbf{S}$ is the variance-covariance matrix for the predictors, and $^T$ means transposition. A variance-covariance matrix is a symmetrical square matrix with variances on the diagonal, and covariances elsewhere (in `R` we obtain a variance matrix by calling the `cov` function with more than one variable).  Recall the `R` matrix multiplication operator `%*%`.
 
 ```{r}
 t(coefs[2:3,1]) %*% cov(cbind(x1,x2)) %*% coefs[2:3,1]
 ```
 
-This latter approach is the most general, as it extends to any number of predictors in the model. Note that we could, for example, compute the variance explained by a subset of the predictors by specifying the correct vector of $\beta$ coefficients and their corresponding variance-covariance matrix. This is useful if we had, say, 3 variables related to climate and 3 other variables related to local land-use, and wanted to know how these sets each explain variance in some variable (say, the size of pine trees).
+This latter approach is the most general, because it extends to any number of predictors in the model. Note that we could, for example, compute the variance explained by a subset of the predictors by specifying the correct vector of $\beta$ coefficients and their corresponding variance-covariance matrix. This is useful if we had, say, 3 variables related to climate and 3 other variables related to local land-use, and wanted to know how these sets each explain variance in some variable (say, the size of pine trees).
 
 This procedure also hints at a method for obtaining parameter estimates that directly reflect the strength of the effects of each predictor. If all variables had the same variance, then the variance explained would be directly proportional to the regression slope. The most common way to standardize predictor variables is to scale them to zero mean and unit variance, a so-called $z$-transform
 
@@ -104,7 +102,7 @@ Note that the model fit (e.g. the $r^2$) has not changed, but the parameter esti
 
 Second, the slopes now have units of standard deviations, i.e. they describe the change in $y$ per standard deviation change in each predictor. This shows directly that the predictor $x_2$ explains more variance in $y$ than does $x_1$.
 
-Another useful transformation could be a natural log-transform, or similarly mean-scaling, which would give the slopes units of means, and allow interpreting the change in $y$ per percent change in $x$. These proportional slopes are technically called *elasticities*.
+Another useful transformation could be a natural log-transform, or similarly mean-scaling, which would give the slopes units of means, and allow interpreting the change in $y$ per percent change in $x$. These proportional slopes are technically called *elasticities* and are perhaps best known in biology from demography research, where elasticities of population growth rate to changes in vital rates are routinely reported.
 
 ```{r}
 x1_m = (x1 - mean(x1))/mean(x1)
@@ -126,19 +124,21 @@ r2 = summary(m1)$r.squared
 1/(1-r2)
 ```
 
-This is very low, because the two predictors are not strongly correlated. Rules of thumb for what constitutes severe variance inflation range from $VIF>3$ to $VIF>10$. When this occurs, the parameter estimates become associated with excessive variance and are thus less reliable. In these cases it may be good to simplify the model by removing some of the correlated predictors, especially if there are several predictors that essentially represent the same property (e.g. multiple measures of body size). If the effects of the correlated predictors are of specific interest, it can also make sense to fit alternative models including each of the candidate predictor, and compare estimates. If the 'best model' is desired, the choice among the predictor may be based on model selection techniques.
+This is very low, because the two predictors are not strongly correlated. Rules of thumb for what constitutes severe variance inflation range from $VIF>3$ to $VIF>10$. When this occurs, the parameter estimates become associated with excessive variance and are thus less reliable. In these cases it may be good to simplify the model by removing some of the correlated predictors, especially if there are several predictors that essentially represent the same property (e.g. multiple measures of body size). If the effects of the correlated predictors are of specific interest, it can also make sense to fit alternative models including each of the candidate predictor, and compare estimates. If the "best model" is desired, the choice among the predictors may be based on model selection techniques.
 
 ### Data exercise: multiple regression and variable selection
 
-A common problem in biology is that we have a large number of variables, many of which could potentially predict variation in a response variable. Including a lot of predictors in the same model can lead to problems with multicollinearity, with 'overfitting' (resulting in a model that explains a lot of variance but fails to predict independent test data), and difficulties in interpretation.
+A common problem in biology is that we have a large number of variables, many of which could potentially predict variation in a response variable. Including a lot of predictors in the same model can lead to problems with multicollinearity, with "overfitting" (resulting in a model that explains a lot of variance but fails to predict independent test data), and difficulties in interpretation.
 
-We will return in a later section to a more complete treatment of the problem of model selection, but for now let's consider two main approaches to choosing among a large set of potential variables. A 'statistical' approach to the problem is to look for the simplest model that does a decent job in explaining variation in the data. This can be done e.g. by so-called backward selection of variables, which means that we start from a full (or "saturated") model including all potential predictors, and then sequentially drop non-significant terms until all terms are statistically significant.
+We will return in a later section to a more complete treatment of the problem of model selection, but for now let's consider two main approaches to choosing among a large set of potential variables. A "statistical" approach to the problem is to look for the simplest model that does a decent job in explaining variation in the data. This can be done e.g. by so-called backward selection of variables, which means that we start from a full (or "saturated") model including all potential predictors, and then sequentially drop non-significant terms until all terms are statistically significant.
 
-The problem with this approach is that it focusses on hypothesis testing over interpretation of effects. As we have discussed previously, a 'significant' hypothesis test does not necessarily mean that the effect is biologically important. One strategy for avoiding this fallacy is to start from a well defined biological hypothesis that can be formulated as a statistical model. The focus is then moved from statistical hypothesis testing to a 'simpler' task of parameter estimation and interpretation.
+The problem with this approach is that it focusses on hypothesis testing over interpretation of effects. As we have discussed previously, a statistically significant hypothesis test does not necessarily mean that the effect is biologically important. One strategy for avoiding this fallacy is to start from a well defined biological hypothesis that can be formulated as a statistical model. The focus is then moved from statistical hypothesis testing to a "simpler" task of parameter estimation and interpretation.
 
-In the following exercise, we will try both approaches for the same dataset, and see if we end up with the same final model. The following dataset includes data on the local abundance of two alpine plant species, measured as the number of times the species was hit in a so-called pinpoint analysis, where 25 metal pins were passed vertically through the vegetation within a 25*25 cm plot. The data also include a number of environmental variables. Start by exploring the data. Then, think about some possible hypotheses (models) that could explain the distribution of the plant species. Fit the models and interpret the results.
+In the following exercise, we will try both approaches for the same dataset, and see if we end up with the same final model. The following dataset includes data on the local abundance of two alpine plant species, measured as the number of times the species was hit in a so-called pinpoint analysis, where 25 metal pins were passed vertically through the vegetation within a 25 $\times$ 25 cm plot. The data also include a number of environmental variables. The temperature variables are measured by microloggers placed just below the soil surface, so that the winter temperatures represent the temperature under any snowcover. Temperatures are measured in degrees Celsius, light intensity as the % of sunlight that reaches through the vegetation, snow cover in cm, altitude in m, and soil moisture in %.
 
-Then, do a backward selection in which you start from a saturated (full) model and sequentially drop non-significant terms. Do you end up with the same model?
+Start by exploring the data by extracting summaries and making basic graphs. Are there any obvious outliers? If so, consider removing them. Then, think about some possible hypotheses (models) that could explain the distribution of the plant species. Fit the models, evaluate the model fit (are the residuals roughly normally distributed?) and interpret the results.
+
+Then, do a backward selection in which you start from a saturated (full) model and sequentially drop the statistically least significant terms until all terms are statistically significant (P<0.05). Do you end up with the same model?
 
 ```{r}
 plants = read.csv(file="datasets/alpineplants.csv")
@@ -148,25 +148,35 @@ plants = read.csv(file="datasets/alpineplants.csv")
 names(plants)
 ```
 
+**Example of data exploration**
+
 ```{r, fig.height=8, fig.width=8}
 pairs(plants[,3:12], panel=panel.smooth)
 ```
+
+There seems to be an outlier for maximum winter temperature. A histogram can help to assess.
 
 ```{r, fig.height=4, fig.width=4}
 hist(plants$max_T_winter)
 ```
 
+This kind of outlier may influence the model fit. After going back to the original fieldnotes to check if there was any error in data entry, it may well be worth excluding the datapoint from the analysis.
+
 ```{r}
 plants = plants[-which.max(plants$max_T_winter),]
 ```
 
+Next, we fit the saturated model for *Thalictrum alpinum* and have a look at the residual distribution.
 
 ```{r, fig.height=4, fig.width=4}
 m = lm(Thalictrum.alpinum~mean_T_winter+max_T_winter+min_T_winter+mean_T_summer+
-         max_T_summer+min_T_summer+light+snow+soil_moist+altitude, data=plants, na=na.exclude)
+       max_T_summer+min_T_summer+light+snow+soil_moist+altitude, 
+       data=plants,       
+       na=na.exclude)
 hist(residuals(m))
 ```
 
+The residuals look OK, but not perfect. Because the response variable is a count, we could consider a square-root transformation. (Later in the course we will see that count data are better dealt with through GLM techniques)
 
 ```{r, fig.height=4, fig.width=4}
 m = lm(sqrt(Thalictrum.alpinum)~mean_T_winter+max_T_winter+min_T_winter+mean_T_summer+
@@ -174,11 +184,13 @@ m = lm(sqrt(Thalictrum.alpinum)~mean_T_winter+max_T_winter+min_T_winter+mean_T_s
 hist(residuals(m))
 ```
 
+These residuals look perhaps slightly better, so we proceed to look at the parameter estimates.
+
 ```{r}
 summary(m)
 ```
 
-Winter maximum temperature is the statistically least significant, hence we drop it from the model
+Winter maximum temperature is the statistically least significant predictor, hence we drop it from the model.
 
 ```{r}
 m = lm(sqrt(Thalictrum.alpinum)~mean_T_winter+min_T_winter+mean_T_summer+
@@ -196,7 +208,9 @@ summary(m)
 
 ## Analysis of Covariance (ANCOVA)
 
-Analysis of Covariance can be thought about as a combination of regression and analysis of variance. The simplest case is when we have a single continuous variable ("covariate") and a single categorical predictor. An ANCOVA analysis can then be used to ask whether the slope of the regression differs between groups (levels of the categorical variable). A statistically supported interaction means that the slopes differ between groups, while a statistically supported main effect of groups means that the intercepts differ.
+Analysis of Covariance can be thought about as a combination of regression and analysis of variance. The simplest case is when we have a single continuous variable ("covariate") and a single categorical predictor. An ANCOVA analysis can then be used to ask whether the slope of the regression (relationship between the response and the continuous predictor) differs between groups (levels of the categorical variable). A statistically supported interaction means that the slopes differ between groups, while a statistically supported main effect of groups means that the intercepts differ.
+
+As always, we start by simulating some data under the ANCOVA model that we will try to fit.
 
 ```{r}
 set.seed(12)
@@ -204,14 +218,13 @@ x = rnorm(200, 50, 5)
 gr = factor(c(rep("Male", 100), rep("Female", 100)))
 y = -2 + 1.5*x + rnorm(200, 0, 5)
 y[101:200] = 2 + 0.95*x[101:200] + rnorm(100, 0, 6)
-
 ```
 
 ```{r, fig.height=4, fig.width=4}
 plot(x, y, pch=c(1,16)[as.numeric(gr)], las=1)
 ```
 
-Just as for ANOVA analyses, we can extract two kinds of summaries for an ANCOVA analysis. 
+Just as for ANOVA analyses, we fit the model with the `lm` function, and we can extract two kinds of summaries for an ANCOVA analysis. 
 
 ```{r}
 m = lm(y~x*gr)
@@ -226,7 +239,7 @@ The `anova` function returns the familiar ANOVA table including the sums of squa
 summary(m)
 ```
 
-In this case the slope is steeper for males. Note that to obtain the slope for males, we have to sum the slope for females (`x`) and the interaction term (`x:grMale`). If we want to extract the male and female slopes and intercepts with their standard errors, we can reformulate the model by suppressing the global intercept. 
+In this case the slope is steeper for males. Note that to obtain the slope for males, we have to sum the slope for females (`x`) and the interaction term (`x:grMale`). If we want to extract the male and female slopes and intercepts with their standard errors, we can reformulate the model by suppressing the global intercept.
 
 ```{r}
 m2 = lm(y ~ -1 + gr + x:gr)
@@ -242,7 +255,7 @@ logLik(m2)
 
 ### Data exercise: Interpreting linear-model analyses
 
-Flowers are integrated phenotypes, which means that the different parts of the flowers are generally covarying with each other so that large flowers have e.g. both longer petals and longer sepals. Evolutionary botanists are interested in these patterns of covariation among floral parts, because they can affect for example the fit of flowers to their pollinators. We will work with a dataset on flower measurements from 9 natural populations in Costa Rica.
+Flowers are integrated phenotypes, which means that the different parts of the flowers are generally covarying with each other so that large flowers have e.g. both longer petals and longer sepals. Evolutionary botanists are interested in these patterns of covariation among floral parts, because they can affect for example the fit of flowers to their pollinators. We will work with a dataset on flower measurements from 9 natural populations of the plant *Dalechampia scandens* in Costa Rica. A drawing of a *Dalechampia* blossom is avaiable in Canvas.
 
 The traits are
 
@@ -256,7 +269,7 @@ The traits are
 - GW: gland width ($mm$)
 - GA: gland area ($mm^2$)
 
-The traits have known or assumed functions. Anther-stigma distance is important for the ability of self-pollination, gland-anther distance and gland-stigmas distance affect the fit of flowers to pollinators, the upper and lower bracts are advertisements (think petals in other flowers), and the gland produces the the reward for pollinators.
+The traits have known or assumed functions. Anther-stigma distance is important for the ability of self-pollination, gland-anther distance and gland-stigmas distance affect the fit of flowers to pollinators, the upper and lower bracts are advertisements (think petals in other flowers), and the gland secretes a resin, the reward for pollinators in this system.
 
 The first step in any data analysis in always to explore the data. Make a series of histograms and plots. How are the data distributed? Are there any problematic outliers? How are patterns of trait correlations? Which traits are (proportionally) more variable?
 
@@ -293,7 +306,7 @@ After exploring and summarizing the data, fit some linear models to estimate the
 
 ```{r, fig.height=4, fig.width=4, include=T, echo=T}
 plot(log(blossoms$LBW), log(blossoms$UBW), ylim=c(1,3.5), las=1,
-     xlab="Lower bract width( log mm)",
+     xlab="Lower bract width (log mm)",
      ylab="UBW/GSD (log mm)")
 points(log(blossoms$LBW), log(blossoms$GSD), pch=16)
 ```
@@ -317,7 +330,6 @@ In an analysis of covariance we start by asking whether the slope differs among 
 ```{r}
 m2 = lm(log(GSD)~log(LBW)+pop, data=blossoms)
 anova(m2)
-
 ```
 
 The next step in the analysis of covariance is to test for differences in intercepts among groups, as indicated by by the main effect of the grouping variable (here population). The ANOVA table indicates support for population-specific intercepts (i.e. different mean GSD in different populations), and we can then go on to interpret these differences.

@@ -1,8 +1,8 @@
 ---
 title: "Processing and Analysis of Biological Data"
-subtitle: "Generalized Linear Models (GLM)"
-author: "Øystein H. Opedal"
-date: "9 Nov 2023"
+subtitle: "Chapter 5. Generalized Linear Models (GLM)"
+author: "Øystein H. Opedal, Department of Biology, Lund University"
+date: "`r Sys.Date()`"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -147,6 +147,33 @@ r.squaredGLMM(m)
 Another possibility for logistic regression is to compute the coefficient of discrimination, or Tjur's $D$. Indeed, there are several ways to evaluate the performance of a statistical model, and in a logistic regression it makes sense to ask how well the model discriminates between true positives and negatives in the data.
 
 The coefficent of discrimination is defined as $D=\bar{\hat{\pi_1}}-\bar{\hat{\pi_0}}$, and is computed by comparing the predicted probability for those data points that are successes or positives (1s; $\bar{\hat{\pi_1}}$) to the predicted probability for those data points that are failures or negatives (0s; $\bar{\hat{\pi_1}}$).
+
+```{r, fig.height=4, fig.width=5, echo=F}
+xx = seq(0,9, 0.01)
+yvals = invlogit(-3+0.7*xx)
+plot(xx, yvals, type="l", ylim=c(0,1), las=1, 
+     xlim=c(0, 12.5), bty="l",
+     ylab="Probability", xlab="", xaxt="n")
+mtext("Predictor", 1, 1)
+xvals = c(1,2,3,6,7,8)
+yvals = c(0,0,0,1,1,1)
+points(xvals, yvals, pch=16)
+segments(xvals, yvals, xvals, invlogit(-3+0.7*xvals))
+
+segments(1, mean(invlogit(-3+0.7*xvals)[1:3]),9.5, mean(invlogit(-3+0.7*xvals)[1:3]), lty=2)
+segments(6, mean(invlogit(-3+0.7*xvals)[4:6]),9.5, mean(invlogit(-3+0.7*xvals)[4:6]), lty=2)
+
+xpos = 10
+text(xpos, mean(invlogit(-3+0.7*xvals)[1:3]), expression(paste(bar(hat(pi[0])))), adj=0)
+text(xpos, mean(invlogit(-3+0.7*xvals)[4:6]), expression(paste(bar(hat(pi[1])))), adj=0)
+
+text(xpos, mean(invlogit(-3+0.7*xvals)[1:6]), adj=0,
+     expression(paste("D = ", bar(hat(pi[1]))-bar(hat(pi[0])))))
+
+arrows(9.75, mean(invlogit(-3+0.7*xvals)[1:3]), 9.75, mean(invlogit(-3+0.7*xvals)[4:6]),
+       code=3, angle=90, length=0.05, lty=1)
+```
+
 
 ```{r}
 y_hat = coefs[1,1] + coefs[2,1]*x
@@ -346,28 +373,40 @@ m = glm.nb(y~x)
 ```{r}
 summary(m)
 ```
-
-Note especially that the estimated standard error is now much larger.
-
 ## Data exercise: bee distribution
 
-The following dataset includes the abundance of the bee species *Eulaema nigrita* in the Brazilian Atlantic forest, and a number of potential predictor variables including climate (mean annual temperature and precipitation, temperature and precipitation seasonality) and land use (proportion forest cover and land use heterogeneity defined as the Shannon diversity of local land-use classes). Use a GLM to build a model explaining the distribution patterns of *Eulaema nigrita*. Interpret the results and produce nice tables and figures.
+The following dataset includes the abundance of the bee species *Eulaema nigrita* in the Brazilian Atlantic forest, and a number of potential predictor variables including climate (mean annual temperature and precipitation, temperature and precipitation seasonality) and land use (proportion forest cover and land use heterogeneity defined as the Shannon diversity ($-\Sigma_i p_i ln p_i$) of local land-use classes).
+
+The climate data from the *Worldclim* dataset are much used in ecological studies. The mean annual temperature (MAT) is given in degrees Celsius times 10, the annual precipitation in mm, the temperature seasonality (Tseason) as 100 times the standard deviation of the monthly temperature, and the precipitation seasonality (Pseason) as the CV of monthly precipitation (given as a percent, i.e. times 100). Why is the temperature seasonality measured as a standard deviation and the precipitation as a CV?
+
+The *effort* variable in the log number of hours of sampling, and the *method* variable indicates whether the collecting was done with hand nets, traps, or a combination of both.
+
+Use a GLM to build a model explaining the distribution patterns of *Eulaema nigrita*. Interpret the results and produce nice tables and figures.
 
 ```{r}
 dat = read.csv("datasets/Eulaema.csv")
 head(dat)
 ```
 
-Example analysis
+### Example analysis
 
 As an example, we will ask whether the local abundance of *Eulaema nigrita* depends on forest cover, while accounting for variation in yearly rainfall. We could write the analysis methods as follows:
 
-To assess the response of *Eulaema nigrita* to variation in forest cover, we fitted a generalized linear model with negative binomial error distribution (accounting for severe overdispersion) and a log link function. To account for the expected greater abundance of the study species in drier areas, we included mean annual precipitation as a covariate in the model.
+To assess the response of *Eulaema nigrita* to variation in forest cover, we fitted a generalized linear model with negative binomial error distribution (accounting for severe overdispersion) and a log link function. To account for the expected greater abundance of the study species in drier areas, we included mean-centered mean annual precipitation as a covariate in the model.
 
 ```{r}
-m = glm.nb(Eulaema_nigrita ~ MAP + forest., data = dat)
+dat$mcMAP = dat$MAP - mean(dat$MAP, na.rm=T)
+m = glm.nb(Eulaema_nigrita ~ mcMAP + forest., data = dat)
 summary(m)
 1- m$deviance/m$null.deviance
+```
+
+To interpret the parameter estimates, it is easiest to backtransform the predicted values for some relevant scenarios to the original count scale. Because MAP is mean-centered, the intercept corresponds to the the number of bees counted when forest cover i zero and MAP is set to its mean. Because forest cover ranges from 0 to 1, an one unit increase corresponds to the entire data range, and we can easily compute the predicted number of bees in a fully forested landscape by simply adding the forest-cover parameter estimate to the intercept.
+
+```{r}
+coefs = summary(m)$coef
+exp(coefs[1,1])
+exp(coefs[1,1] + coefs[3,1])
 ```
 
 ### Making predictions from multiple-regression models
@@ -380,36 +419,41 @@ plot(dat$forest., dat$Eulaema_nigrita, col="grey", las=1,
      ylab="El. nigrita abundance")
 
 newforest = seq(min(dat$forest.), max(dat$forest.), length.out=200)
-newMAP = rep(mean(dat$MAP), length(newforest))
-y_hat = predict(m, newdata=list(MAP=newMAP, 
+newMAP = rep(mean(dat$mcMAP), length(newforest))
+y_hat = predict(m, newdata=list(mcMAP=newMAP, 
                                 forest.=newforest), 
                 type="response")
-lines(newforest, y_hat,lwd=2)
+lines(newforest, y_hat, lwd=2)
 
-newMAP2 = rep(mean(dat$MAP)+sd(dat$MAP), length(newforest))
-y_hat2 = predict(m, newdata=list(MAP=newMAP2, 
-                                forest.=newforest), 
-                type="response")
-
-newMAP3 = rep(mean(dat$MAP)-sd(dat$MAP), length(newforest))
-y_hat3 = predict(m, newdata=list(MAP=newMAP3, 
+newMAP2 = rep(mean(dat$mcMAP)+sd(dat$mcMAP), length(newforest))
+y_hat2 = predict(m, newdata=list(mcMAP=newMAP2, 
                                 forest.=newforest), 
                 type="response")
 
-lines(newforest, y_hat2, lwd=2, col=2)
-lines(newforest, y_hat3, lwd=2, col=3)
+newMAP3 = rep(mean(dat$mcMAP)-sd(dat$mcMAP), length(newforest))
+y_hat3 = predict(m, newdata=list(mcMAP=newMAP3, 
+                                forest.=newforest), 
+                type="response")
 
-legend("topleft", lty=1, lwd=2, col=1:3, bty="n", 
+lines(newforest, y_hat2, lwd=2, col="blue3")
+lines(newforest, y_hat3, lwd=2, col="firebrick")
+
+legend("topleft", lty=1, lwd=2, col=c(1, "blue3", "firebrick"), bty="n", 
        legend=c("MAP = Mean",
                 "MAP = Mean + SD",
                 "MAP = Mean - SD"))
+
+abline(h=exp(coefs[1,1]), lty=2)
+abline(h=exp(coefs[1,1] + coefs[3,1]), lty=2)
 ```
+
 
 ## Hurdle models
 
 In biology we often have count data with many zeros. This is one of the causes of overdispersion as discussed above. Another way to deal with this is to split the analysis into two independent components, where the first models the zeros, and the second models the counts given that at least 1 entity was observed. This is called a hurdle model, where hurdle refers to the separation of zeros from non-zeros. We can fit a hurdle model in two parts and then combine the predictions.
 
-Below we define two new response variables, where the first (y1) is a 0/1 variable, and the second (y2) has all the zeros set to `NA`.
+Below we define two new response variables, where the first ($y1$) is a 0/1 variable, and the second ($y2$) has all the zeros set to `NA`.
+
 ```{r}
 y1 = ((y>1)*1)
 m1 = glm(y1~x, family="binomial" (link="logit"))
@@ -432,5 +476,17 @@ par(mfrow=c(1,3))
 plot(x, invlogit(y_hat1), las=1)
 plot(x, exp(y_hat2), las=1)
 plot(x, y_pred, las=1)
+```
+
+
+Note especially that the estimated standard error is now much larger.
+
+## Data exercise: bee distribution
+
+The following dataset includes the abundance of the bee species *Eulaema nigrita* in the Brazilian Atlantic forest, and a number of potential predictor variables including climate (mean annual temperature and precipitation, temperature and precipitation seasonality) and land use (proportion forest cover and land use heterogeneity defined as the Shannon diversity of local land-use classes). Use a GLM to build a model explaining the distribution patterns of *Eulaema nigrita*. Interpret the results and produce nice tables and figures.
+
+```{r}
+dat = read.csv("datasets/Eulaema.csv")
+head(dat)
 ```
 

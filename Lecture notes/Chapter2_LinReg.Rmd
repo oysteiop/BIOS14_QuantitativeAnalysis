@@ -1,8 +1,8 @@
 ---
 title: "Processing and Analysis of Biological Data"
-subtitle: "The Linear Model 1: Linear regression"
-author: "Øystein H. Opedal"
-date: "31 Oct 2023"
+subtitle: "Chapter 2. The Linear Model I: Linear regression"
+author: "Øystein H. Opedal, Department of Biology, Lund University"
+date: "`r Sys.Date()`"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -12,15 +12,15 @@ pandoc_args: ["--wrap=none"]
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Nearly all the statistical models we will discuss in this text are forms of the linear model
+Nearly all the statistical models we will discuss in this course are forms of the linear model
 
 $y_i = \beta_0 + \Sigma_j x_{ij} \beta_j + \epsilon_i$
 
-The term $\beta_0$ (sometimes denoted $\alpha$) is the *intercept*, which in the context of a linear regression gives the value of the response variable $y$ when the predictor variable $x$ is zero. The $\beta_j$ are the coefficients ('slopes') for the predictor variables $x$, and the $\epsilon$ represent the *residuals*, the deviations of each data point from it's expected value based on the fitted model. The linear model assumes that the residuals (not the data!) are normally distributed, though minor deviations from this is not generally a problem.
+The term $\beta_0$ (sometimes denoted $\alpha$) is the *intercept*, which in the context of a linear regression gives the value of the response variable $y$ when the predictor variable $x$ is zero. The $\beta_j$ are the coefficients ("slopes") for the predictor variables $x$, and the $\epsilon$ represent the *residuals*, the deviations of each data point from it's expected value based on the fitted model. The linear model assumes that the residuals (not the data!) are normally distributed, although minor deviations from this is not generally a problem.
 
-In the following, we will consider a series of examples of linear models fitted to simulated data. After simulating some values of the predictor $x$, we define $y$ as a function of $x$ and add some residual variance to the data (i.e. we simulate data from the same linear model that we will eventually fit to the data.) The advantage of starting from simulated data is that we know the true values of the parameters we will try to estimate. This is very useful when we want to check that our analysis is doing what we think it is doing.
+In the following we will consider a series of examples of linear models fitted to simulated data. After simulating some values of the predictor $x$, we define $y$ as a function of $x$ and add some residual variance to the data. Hence, we simulate data from the same linear model that we will eventually fit to the data. The advantage of starting from simulated data is that we know the true values of the parameters we will try to estimate. This is very useful when we want to check that our analysis is doing what we think it is doing.
 
-In the code below, note that `R` functions know the order of arguments, and that second incidence of `rnorm` below skips the formalities. To know the names and order of arguments to functions, call `?function`.
+In the code below, note that `R` functions know the order of arguments, and the second incidence of `rnorm` below skips the formalities. To know the names and order of arguments to functions, call `?function`.
 
 ```{r, fig.height=4, fig.width=4, fig.cap="Scatterplot of simulated data from a linear model"}
 set.seed(85)
@@ -32,26 +32,26 @@ plot(x, y, las=1,
      ylab="Leaf width (mm)")
 ```
 
-At this point let's talk about how to write `R` code. In the `R` chunk above you may start to notice some style conventions. When we are new to `R` and coding, most of us write really messy code. It is now becoming mandatory to publish our code alongside our papers, and we thus have to learn to write code that is easy to read and pleasant to look at. I don't follow all the 'rules' around this, but at least I try to be consistent. For example, the strict `R` convention has been to use the `<-` operator for assignments, but I find the `=` easier. Note though the spaces to either side of `=` that makes the code easier to read. Within functions, add a space after commas.
+At this point let's talk about how to write `R` code. In the `R` chunk above you may start to notice some style conventions. When we are new to `R` and coding, most of us write really messy code. It is now becoming mandatory to publish our code alongside our papers, and we thus have to learn to write code that is easy to read and pleasant to look at. I don't follow all the "rules" around this, but at least I try to be consistent. For example, the strict `R` convention has been to use the `<-` operator for assignments, but I find the `=` easier. Note though the spaces to either side of `=` that makes the code easier to read. Within functions, add a space after commas.
 
 In scatterplots, a useful change from the default is to make the *y*-axis labels horizontal by setting `las=1`. There are hundreds of ways to change the appearance of `R`-plots, see the wonderful world of `par()`. If you prefer, you can choose to learn alternative plotting frameworks such as `ggplot`, but in these lecture notes I will use `R` packages only when strictly needed.
 
-The aim of regression analysis is to estimate the linear relationship between a response variable (or 'dependent variable') and one or more predictor variables ('independent variables'). The most common form of regression analysis is so-called ordinary least-square (OLS) regression, in which the regression parameters are estimated so as to minimize the square deviations of the data points from the estimated regression line. The deviations are termed *residuals*, and are assumed to be normally distributed.
+The aim of regression analysis is to estimate the linear relationship between a response variable (or "dependent variable") and one or more predictor variables ("independent variables"). The most common form of regression analysis is so-called ordinary least-square (OLS) regression, in which the regression parameters are estimated so as to minimize the square deviations of the data points from the estimated regression line. The deviations are termed *residuals*, and are assumed to be normally distributed. In `R`, we fit linear models with the `lm` function. The fitted model object contains a lot of information, so we save it as an object (here `m`) to facilitate postprocessing.
 
 ```{r}
 m = lm(y~x)
 ```
 
-The object `m` now holds the fitted model. Let's first extract the model coefficients and produce some plots of the residuals. To do so we first pull out the parameter estimates from the fitted model. In general, to extract a specific value or component of an object, we can call `str()`, which will return a list of components available within the object. We then use `$` to index the component we want to extract (here `m$coef`).
+The object `m` now holds the fitted model. Let's first extract the model coefficients (parameter estimates) and produce some plots of the residuals. To do so we first pull out the parameter estimates from the fitted model. In general, to extract a specific value or component of an object, we can call the `str` function, which will return a list of components available within the object. We then use `$` to index the component we want to extract (here `m$coef`).
 
 ```{r}
 cf = m$coef
 cf
 ```
 
-EXERCISE: Use the parameter estimates to draw (by hand) the scatterplot of *y* vs *x* with the regression line, indicating the location of the intercept and roughly the correct slope.
+EXERCISE: Use the parameter estimates to draw (by hand, on a piece of paper) the scatterplot of *y* vs. *x* with the regression line, indicating the location of the intercept and roughly the correct slope.
 
-To obtain the predicted values, we pull out (using square brackets `[]` to index elements of a vector) the relevant parameter estimates (intercept and slope), and compute the predicted values using the equation for the linear model we fitted. Below we also add lines from the predicted values to the actual value of the response variable, illustrating the residuals.
+To obtain the predicted values from the model, we pull out (using square brackets `[]` to index elements of a vector) the relevant parameter estimates (intercept and slope), and compute the predicted values using the equation for the linear model we just fitted. Below we also add line segments (using the `segments` function) from the predicted values to the actual value of the response variable, illustrating the residuals.
 
 ```{r, fig.height=4, fig.width=8, fig.cap="Scatterplot with fitted regression line and illustration of residuals"}
 
@@ -66,7 +66,7 @@ segments(x, y, x, predvals)
 hist(residuals(m), xlab="", las=1)
 ```
 
-These residuals are fine, as is of course fully expected given that we simulated the data from the (Gaussian) linear model. There are many other ways of assessing whether the model assumptions are met, see for example what happens if you call `plot(m)` after setting `par(mfrow=c(2,2))`. Notice that the `plot` function is *generic*, it produces a different result depending on what is fed to it. If we call `plot(x,y)` when both `x` and `y` are continuous variables, we get a scatterplot. If `x` is a factor, we get a boxplot.
+These residuals are fine, as is of course fully expected given that we simulated the data from the (Gaussian) linear model. There are many other ways of assessing whether the model assumptions are met, see for example what happens if you call `plot(m)` after setting `par(mfrow=c(2,2))`. Notice that the `plot` function is *generic*, it produces a different result depending on what is fed to it. If we call `plot(x, y)` when both `x` and `y` are continuous variables, we get a scatterplot. If `x` is a factor, we get a boxplot.
 
 Above we also added the fitted regression line through the ready-made `abline` function. To keep the regression line within the data range, it is better to make predictions for new values of $x$ spanning the data range and add the regression line using the `lines` function.
 
@@ -86,9 +86,9 @@ After checking that the residuals are fine, let's now have a look at the results
 summary(m)
 ```
 
-This summary contains a lot of information. First, we can see some quantiles of the residual distribution, which confirms what we have already seen from the histogram: the residuals are fine because the median is close to zero, the 1st and 3rd quartile are symmetrical, and the min and max values are nearly symmetrical too.
+This summary contains a lot of information. First, we can see some quantiles of the residual distribution, which confirms what we have already seen from the histogram: the residuals are fine because the median is close to zero, the 1st and 3rd quartiles (25% and 75% of the distribution, respectively) are symmetrical, and the min and max values are nearly symmetrical too.
 
-Next we see the model parameter estimates, their standard errors, a test statistic ($t$), and a $P$-value. It is tempting to look first at the $P$-value, the magic measure of significance and, to some, 'importance'. Before going on, let's take a moment to recall what the $P$-value means and how it is obtained. In the context of the linear regression above, the test statistic $t$ is given by $t = \frac{\hat{\beta}}{SE(\beta)}$. We already know that the standard error $SE=\frac{\sigma}{\sqrt{n}}$, thus
+Next we see the model parameter estimates, their standard errors, a test statistic ($t$), and a $P$-value. It is tempting to look first at the $P$-value, the magic measure of significance and, to some, "importance". Before going on, let's take a moment to recall what the $P$-value means and how it is obtained. In the context of the linear regression above, the test statistic $t$ is given by $t = \frac{\hat{\beta}}{SE(\beta)}$. We already know that the standard error $SE=\frac{\sigma}{\sqrt{n}}$, thus
 
 $t = \frac{\hat{\beta}}{\frac{\sigma(\hat{\beta})}{\sqrt{n}}}$
 
@@ -96,7 +96,7 @@ The most important thing to notice here is that the sample size $n$ is in the de
 
 The $P$-value is the probability of observing the observed value of the test statistic given that the null hypothesis (here, a slope of zero) is true, or $P_{obs} = Pr(T>t_{obs}=t(X_{obs}|H_0))$. In other words, it represents the probability that we would have obtained our results by chance.
 
-Because the $P$-value is obtained by comparing our observed test statistic $t$ to its known distribution, and $t$ increases with sample size, it follows that when the sample size increases, anything will at some point be statistically significant. This is the reason why there are now increasing calls for abandoning $P$-values as the standard measure of statistical significance. That being said $P$-values do provide a 'quick and dirty' way of assessing statistical support, and can help guide our interpretation of the results. We will later return to alternative methods of evaluating statistical support, but for now we focus on the more important point: interpretation of the results needs to be done in light of the parameter estimates, their units, and their consequences within the context of the analysis/study.
+Because the $P$-value is obtained by comparing our observed test statistic $t$ to its known distribution, and $t$ increases with sample size, it follows that when the sample size increases, anything will at some point be statistically significant. This is the reason why there are now increasing calls for abandoning $P$-values as the standard measure of statistical significance. That being said, $P$-values do provide a "quick and dirty" way of assessing statistical support, and can help guide our interpretation of the results. We will later return to alternative methods of evaluating statistical support, but for now we focus on the more important point: interpretation of the results needs to be done in light of the parameter estimates, their units, and their consequences within the context of the analysis/study.
 
 EXERCISE: Use non-parametric bootstrapping to derive a standard error for the slope of the linear regression above. To do so, produce a data frame holding the `x` and `y` values, sample from this dataset (with replacement), fit the model, and save each estimate for the slope of y on x. The samples will give the sampling distribution for the slope, and its standard deviation will provide an estimate of the standard error.
 
@@ -158,7 +158,7 @@ cf[2]^2*var(x)
 ### Exercise: fitting a linear regression to real data
 Choose any dataset you may have involving a continuous response variable and a continuous predictor. Fit a simple linear regression, interpret the results, produce a nice figure including the fitted regression line, and write simple methods and results presenting the analysis and results.
 
-If you don't have any data, use the dataset `bird_allometry` in the datasets folder. This dataset contains body mass and brain mass for males and females of different bird species. The scaling of brain size (or other body parts) with body size is referred to as the study of allometry, and you may want to read about these analyses before fitting your models. As a hint, the scaling of parts of a body with body size is expected to follow a power-law relationship on the form $y = ax^b$, which can be linearized through the logarithmic transformation $log(y) =log(a) + b \times log(x)$.
+If you don't have any data, use the dataset `bird_allometry` in the datasets folder. This dataset contains body mass and brain mass for males and females of different bird species. The scaling of brain size (or other body parts) with body size is referred to as the study of *allometry*, and you may want to read about these analyses before fitting your models. As a hint, the scaling of parts of a body with body size is expected to follow a power-law relationship on the form $y = ax^b$, which can be linearized through the logarithmic transformation $log(y) =log(a) + b \times log(x)$.
 
 ```{r}
 birds = read.csv("datasets/allometry/bird_allometry.csv")
@@ -195,7 +195,7 @@ summary(mf)
 
 Let us now produce a scatterplot illustrating our results.
 
-```{r, fig.height=4, fig.width=4, echo=F}
+```{r, fig.height=4, fig.width=4, echo=F, fig.cap="Scaling relationship between brain size and body size for 483 (females) and 615 (males) bird species"}
 xx = seq(min(log(males$body_mass)), max(log(males$body_mass)), 
          length.out=100)
 xxf = seq(min(log(females$body_mass)), max(log(females$body_mass)), 
