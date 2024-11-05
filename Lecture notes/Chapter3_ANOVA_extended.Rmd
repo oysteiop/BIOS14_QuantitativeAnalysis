@@ -197,7 +197,14 @@ m = lm(DevelopmentTime~MaternalHost*LarvalHost, data=dat)
 anova(m)
 ```
 
-To interpret the results, we look first at the ANOVA table. There are detectable effects of both larval and maternal host plants, with more variance explained by larval host than maternal host (based on the larger sum of squares for larval host). Furthermore, the effects of larval and maternal host are not independent, as indicated by a detectable interaction. The variance explained by the interaction term is limited though, as we can also see from the graph. 
+To interpret the results, we look first at the ANOVA table. There are detectable effects of both larval and maternal host plants, with more variance explained by larval host than maternal host (based on the larger sum of squares for larval host). Furthermore, the effects of larval and maternal host are not independent, as indicated by a detectable interaction. The variance explained by the interaction term is limited though, as we can also see from the graph.
+
+\newpage
+
+```{r}
+summary(m)
+```
+To interpret the summary table from a two-way ANOVA, we need to know how to read the parameter estimates. The Intercept is, as before, the estimated mean for the reference group. Here, the reference group is the combination of the the first level of each factor, in this case *Barbarea* as both maternal and larval host plant. The following to terms are the contrasts between the reference group and the alternative maternal and larval host plants, respectively. Finally, the interaction effect (the last term above), gives the *added* effect of changing both the maternal and the larval host plant. Hence, to obtain the estimated mean for the combination maternal host *Berteroa* and larval host *Berteroa*, we sum all the parameter estimates. Check that this is indeed the case!
 
 To quantify the effect size, it is useful to first compute the mean development time for each larval and maternal host plant.
 

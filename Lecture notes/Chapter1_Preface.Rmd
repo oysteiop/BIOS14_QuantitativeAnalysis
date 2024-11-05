@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Preface
-These lectures notes are written for the course BIOS14 at Lund University. They will cover what I consider to be necessary (or at least useful) knowledge of data analysis and quantitative methods in ecology, evolutionary biology, and related fields. This document is work-in-progress and is not comprehensive. I therefore strongly encourage you to consult the many excellent text books available on "biostatistics", `R`, quantitative biology etc.
+These lectures notes are written for the course BIOS14 at Lund University. They will cover what I consider to be necessary (or at least useful) knowledge about data analysis and quantitative methods in ecology, evolutionary biology, and related fields. This document is work-in-progress and is not comprehensive. I therefore strongly encourage you to consult the many excellent text books available on "biostatistics", `R`, quantitative biology etc.
 
 Beyond these lecture notes, the main course literature is the book 
 
@@ -25,7 +25,11 @@ What separates this document (and this course) from "typical" texts in biostatis
 
 Wasserstein, R. L., and N. A. Lazar. 2016. The ASA Statement on p-Values: Context, Process, and Purpose. The American Statistician 70: 129-133.
 
-Beyond quantification and data analysis, the following chapters will also introduce some basic data handling, scientific programming, and graphics. These skills are by now essential for most practicing researchers, and I like to think the skills will be useful also for those that put their Biology education to use outside of academia. To understand the importance of quantification and biological interpretation in Biology, we will start with a brief introduction to measurement theory.
+Beyond quantification and data analysis, the following chapters will also introduce some basic data handling, scientific programming, and graphics. These skills are by now essential for most practicing researchers, and I like to think the skills will be useful also for those that put their Biology education to use outside of academia.
+
+The principles of statistical analysis are closely related to principles of experimental design, that often dictate the appropriate analysis. Although the present course is not focused on experimental design, we will therefore make reference to design where relevant, and I recommend revisiting books on experimental design. 
+
+To understand the importance of quantification and biological interpretation in Biology, we will start with a brief introduction to measurement theory.
 
 ## Measurement and meaning in biology
 Measurement theory is concerned with the relationship between measurements and the theoretical context in which they will function. In other words, what are the numbers we record meant to represent? The title of this section is shared with an important paper published in 2011 by evolutionary biologist David Houle and colleagues, in which they pointed out the common disconnect in Biology between the measurements taken in the field or laboratory, and the biological properties they are meant to represent. This exemplifies a more general problem across Biology, where the interpretation of measurements and analyses fails to focus on the biological questions that motivated the study in the first place. Before reading on, I strongly suggest to read at least the first pages of Houle et al. 2011, to get a grasp of the problem at hand.
@@ -119,7 +123,7 @@ se_x = sqrt(var(x)/length(x))
 
 We will do a non-parametric bootstrap, where we resample the data many times. For each resampling, we maintain the original sample size (here 50), but we draw from the data with replacement, so that by chance some values will be sampled several times and others not at all. Before running the *for*-loop, we have to define the variable (here called `out`) that we will use to store the results for each iteration of our loop.
 
-To understand the liens of code below, recall that you can access the help file for any `R` function by typing `?function`, here e.g. `?sample` to see which arguments can be passed to the `sample` function, and what their defailt values are. When you are new to `R`, you may have to look up the arguments for every function, but soon you will learn the basics of many functions and it will get easier.
+To understand the lines of code below, recall that you can access the help file for any `R` function by typing `?function`, here e.g. `?sample` to see which arguments can be passed to the `sample` function, and what their default values are. When you are new to `R`, you may have to look up the arguments for every function, but soon you will learn the basics of many functions and it will get easier.
 
 ```{r}
 out = NULL
@@ -148,7 +152,7 @@ Given that we also have the full sampling distribution, we can also choose to de
 quantile(out, c(0.025, 0.975))
 ```
 
-Recall that we could also have derived the 95% confidence interval analytically as $\pm 1.96SE$. This follows from the properties of the *standard normal distribution* (with a mean of zero and a variance of one), for which the 2.5 and 97.5 percentiles falls ~1.96 standard deviations from the mean. The quantiles of the standard normal distribution are available in `R` through the `qnorm` function. The same is true for other probability distributions, e.g. `qbinom` for the binomial distribution etc.
+Recall that we could also have obtained an approximation of the 95% confidence interval as $\pm 1.96SE$. This follows from the properties of the *standard normal distribution* (with a mean of zero and a variance of one), for which the 2.5 and 97.5 percentiles falls ~1.96 standard deviations from the mean. The quantiles of the standard normal distribution are available in `R` through the `qnorm` function. The same is true for other probability distributions, e.g. `qbinom` for the binomial distribution etc.
 
 ```{r}
 qnorm(c(0.025, 0.975))
