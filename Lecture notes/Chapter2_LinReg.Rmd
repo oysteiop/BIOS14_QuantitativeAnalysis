@@ -265,7 +265,7 @@ Try to correct your estimated slopes in this way, and a produce a plot showing b
 corrslope = slope_est/(1-relerrors)
 
 plot(errors, slope_est,
-     ylim= c(1.4, 1.55),
+     ylim= c(1.35, 1.55),
      las=1,
      xlab="Error standard deviation in x",
      ylab="Estimated slope")
