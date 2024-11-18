@@ -1,8 +1,8 @@
 ---
 title: "Processing and Analysis of Biological Data"
-subtitle: "The Linear Model III: Multiple regression and ANCOVA"
-author: "Øystein H. Opedal"
-date: "13 Nov 2023"
+subtitle: "Chapter 4. The Linear Model III: Multiple regression and Analysis of Covariance"
+author: "Øystein H. Opedal, Department of Biology, Lund University"
+date: "`r Sys.Date()`"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -58,6 +58,8 @@ y_hat2 = coefs[1,1] + coefs[2,1]*mean(x1) + coefs[3,1]*x2
 var(y_hat2)
 var(y_hat2)/var(y)
 ```
+
+Now, we compare the sum of the variance explained by $x_1$ and $x_2$ to the total variance in $y$.
 
 ```{r}
 var(y_hat)
