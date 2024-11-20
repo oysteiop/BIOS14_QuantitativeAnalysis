@@ -1,8 +1,8 @@
 ---
 title: "Processing and Analysis of Biological Data"
-subtitle: "Generalized Linear Models (GLM)"
-author: "Øystein H. Opedal"
-date: "9 Nov 2023"
+subtitle: "Chapter 5. Generalized Linear Models (GLM)"
+author: "Øystein H. Opedal, Department of Biology, Lund University"
+date: "`r Sys.Date()`"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
@@ -23,7 +23,7 @@ and a link function, $g$, that places the predictor on a Gaussian (normally-dist
 $$y = g^{-1}(\eta)$$
 Before going into details about GLMs, we need to recall some basics about the most common error distributions used in biological data analyses.
 
-### Mean-variance relations for the Binomial and Poisson distributions
+### The Binomial distribution
 
 The binomial distribution has two parameters, *n* and *p*, and summarizes a set of so-called Bernoulli trials with two possible outcomes, yes (1) or no (0). When we have performed more than one trial, we can compute the proportion *p* of the *n* trials with a positive outcome.
 
@@ -32,8 +32,6 @@ The theoretical variance of the binomial distribution is given by
 $\sigma^2 = np(1-p)$
 
 ```{r, fig.width=4, fig.height=4}
-#rbinom(3, 10, c(0.1, 0.5, 0.9))
-
 x = seq(from=0, to=1, by=0.01)
 v_b = x*(1-x) #Binomial variance
 plot(x, v_b, type="l", xlab="Probability", ylab="Theoretical variance", las=1)
@@ -41,7 +39,7 @@ plot(x, v_b, type="l", xlab="Probability", ylab="Theoretical variance", las=1)
 
 This is important to keep in mind, because it affects how we can compare the (proportional) variation of variables measures as proportions. If e.g. one population has a mean of 0.5, if will be expected to be much more variable than a second population with a mean of 0.1, just because there is less opportunity to vary. This is a now well-recognized problem e.g. in demography research, where the interest is often in comparing the extent of variation in life-history traits measured as proportions, such as germination or survival. One proposed solution is to scale the observed CV by the maximum based on the theoretical variance, but a perhaps simpler approach is to transform the proportional data in a way that makes them approach a normal distribution.
 
-One previously popular but now not recommended transformation is the so-called arcsin square-root transformation,
+One previously popular but now not recommended transformation is the so-called arcsine square-root transformation,
 
 $x' = \arcsin(\sqrt{x})$
 
@@ -83,6 +81,8 @@ legend("topleft", legend=c("Logit", "Probit"),
 ## Logistic regression
 As we have already seen, a logistic regression (GLM with binomial errors) is well suited for analysing binary data (or proportions).
 
+Below, we simulate data by first formulating a linear predictor $\eta$, then transforming the predicted values into probabilities (through the inverse logit transformation), and finally binarizing the data by sampling from the binomial distribution. The last step adds additional uncertainty by accounting for the stochasticity of the observation process.
+
 ```{r, fig.height=3.5, fig.width=10}
 x = rnorm(200, 10, 3)
 eta = -2 + 0.4*x + rnorm(200, 0, 2)
@@ -95,7 +95,7 @@ plot(x, p, las=1)
 plot(x, y, las=1)
 ```
 
-Above, we simulated data by first formulating a linear predictor $\eta$, then transforming the predicted values into probabilities (through the inverse logit transformation), and finally binarizing the data by sampling from the binomial distribution. The last step adds additional uncertainty by accounting for the stochasticity of the observation process.
+To fit the generalized model, we use the `glm` function and specify the error family (binomial) and link function (here *logit*).
 
 ```{r}
 m = glm(y~x, family=binomial(link="logit")) 
@@ -104,7 +104,7 @@ summary(m)
 
 The summary table includes, as always, a lot of information. The first thing to be aware is that when we are fitting a GLM, we obtain the parameter estimates on the link scale (here logit). Note that the parameter estimates are not too far from those we used to define the linear predictor $\eta$ when we simulated the data. These values are meaningful as such, and if the predictor variable has units of *mm*, the slopes have units of *log odds* $mm^{-1}$.
 
-To interpret the results biologically and to represent them in graphs, it can be useful to backtransform the predicted values to the probability scale. For example, we can ask how much the probability changes for a standard deviation increase in the predictor variable (though note that this is no longer a linear transform, so the consequences of increasing and decreasing the predictor by 1 standard deviation may be different).
+To interpret the results biologically and to represent them in graphs, it can be useful to backtransform the predicted values to the probability scale. For example, we can ask how much the probability changes for a standard deviation increase in the predictor variable (though note that this is no longer a linear transform, so the consequences of increasing and decreasing the predictor by one standard deviation may be different).
 
 Recall from the previous section that a log odds of 0 corresponds to a probability of 0.5  ($log(\frac{0.5}{1-0.5})=log(1)=0$). If we solve the model equation (the linear predictor) for 0, we can thus obtain the predictor value corresponding to a probability of 0.5, which is often a relevant benchmark.
 
@@ -137,16 +137,43 @@ abline(h=0.5, lty=2)
 abline(v=-coefs[1,1]/coefs[2,1], lty=2)
 ```
 
-The GLM summary table does not provide an $r^2$ value, because the normal $r^2$ does not work for logistic regression. There are however several 'Pseudo-$r^2$' available, typically based on comparing the likelihood of the model to that of a null model (a similar model but with only an intercept). The `MuMIn` package provides one such measure. The `r.squaredGLMM` function provides several alternative $r^2$ measures. The reason is that, unlike in a Gaussian model where the residual variance is well defined, the residual variance in a binomial GLM has to be approximated one way or the other. The two alternatives used by the function is the theoretical variance of the binomial distribution (as discussed above), and an approximation based on the delta method (a statistical method/theorem allowing the approximation of a function´s probability distribution). The values will differ, and which to choose is often a matter of taste.
+The GLM summary table does not provide an $r^2$ value, because the normal $r^2$ does not work for logistic regression. There are however several 'Pseudo-$r^2$' available, typically based on comparing the likelihood of the model to that of a null model (a similar model but with only an intercept). The `MuMIn` package provides one such measure.
 
 ```{r, warning=F}
 library(MuMIn)
 r.squaredGLMM(m)
 ```
 
-Another possibility for logistic regression fitted to binary (0/1) data is to compute the coefficient of discrimination, or Tjur's $D$. Indeed, there are several ways to evaluate the performance of a statistical model, and in a logistic regression it makes sense to ask how well the model discriminates between true positives and negatives in the data.
+Another possibility for logistic regression is to compute the coefficient of discrimination, or Tjur's $D$. Indeed, there are several ways to evaluate the performance of a statistical model, and in a logistic regression it makes sense to ask how well the model discriminates between true positives and negatives in the data.
 
 The coefficent of discrimination is defined as $D=\bar{\hat{\pi_1}}-\bar{\hat{\pi_0}}$, and is computed by comparing the predicted probability for those data points that are successes or positives (1s; $\bar{\hat{\pi_1}}$) to the predicted probability for those data points that are failures or negatives (0s; $\bar{\hat{\pi_1}}$).
+
+```{r, fig.height=4, fig.width=5, echo=F}
+xx = seq(0,9, 0.01)
+yvals = invlogit(-3+0.7*xx)
+plot(xx, yvals, type="l", ylim=c(0,1), las=1, 
+     xlim=c(0, 12.5), bty="l",
+     ylab="Probability", xlab="", xaxt="n")
+mtext("Predictor", 1, 1)
+xvals = c(1,2,3,6,7,8)
+yvals = c(0,0,0,1,1,1)
+points(xvals, yvals, pch=16)
+segments(xvals, yvals, xvals, invlogit(-3+0.7*xvals))
+
+segments(1, mean(invlogit(-3+0.7*xvals)[1:3]),9.5, mean(invlogit(-3+0.7*xvals)[1:3]), lty=2)
+segments(6, mean(invlogit(-3+0.7*xvals)[4:6]),9.5, mean(invlogit(-3+0.7*xvals)[4:6]), lty=2)
+
+xpos = 10
+text(xpos, mean(invlogit(-3+0.7*xvals)[1:3]), expression(paste(bar(hat(pi[0])))), adj=0)
+text(xpos, mean(invlogit(-3+0.7*xvals)[4:6]), expression(paste(bar(hat(pi[1])))), adj=0)
+
+text(xpos, mean(invlogit(-3+0.7*xvals)[1:6]), adj=0,
+     expression(paste("D = ", bar(hat(pi[1]))-bar(hat(pi[0])))))
+
+arrows(9.75, mean(invlogit(-3+0.7*xvals)[1:3]), 9.75, mean(invlogit(-3+0.7*xvals)[4:6]),
+       code=3, angle=90, length=0.05, lty=1)
+```
+
 
 ```{r}
 y_hat = coefs[1,1] + coefs[2,1]*x
@@ -205,56 +232,6 @@ logLik(mod1) == logLik(mod2)
 
 Can you use the fitted models to estimate the duration of after-ripening required for the expected germination rate to be 0.5?
 
-Suggested analysis
-
-We can use the data to ask how the probability of germination depends on the duration of after-ripening, and whether this further depends on seed size. To do so, we fit a model including both after-ripening time and seed size as predictors.
-
-```{r}
-mod3 = glm(germ2 ~ timetosowing + MCseed, "binomial", weights=nseed, data=subdat)
-summary(mod3)
-```
-
-The model suggests detectable effects of both time and seed size. As always with GLMs, it is a little hard to judge the strength of the effects directly from the parameter estimates, because these are on the link scale (here logit). A figure will often help. To illustrate the effect of seed size, we add regression lines corresponding to the mean seed size (solid line), as well as an increase or decrease in seed size by one standard deviation (dashed lines).
-
-```{r, fig.width=6, fig.height=4}
-par(mar=c(4,4,2,12), xpd=T)
-plot(subdat$timetosowing, subdat$germ2, 
-     xlab="Duration of after-ripening (days)",
-     ylab="Germination rate", las=1)
-xvals = seq(min(subdat$timetosowing, na.rm=T),
-            max(subdat$timetosowing, na.rm=T), 0.01)
-
-coefs = summary(mod3)$coef
-y_hat = coefs[1,1] + coefs[2,1]*xvals 
-lines(xvals, invlogit(y_hat))
-
-y_hat2 = coefs[1,1] + coefs[2,1]*xvals + coefs[3,1]*sd(subdat$MCseed)
-lines(xvals, invlogit(y_hat2), lty=2)
-
-y_hat3 = coefs[1,1] + coefs[2,1]*xvals - coefs[3,1]*sd(subdat$MCseed)
-lines(xvals, invlogit(y_hat3), lty=3)
-
-legend(x=170, y=0.8, lty=c(1,2,3), 
-       bty="n",
-       legend=c("Seed size = Mean", 
-                "Seed size = Mean + SD",
-                "Seed size = Mean - SD"))
-```
-
-To calculate the duration of after-ripening needed for a 50% germination rate, we use the equation above to find that this would be 106.7 days in this population.
-
-```{r}
--coefs[1,1]/coefs[2,1]
-```
-
-To quantify the seed size effect, we can ask how this changes for a seed that is one standard deviation larger or smaller than the mean.
-
-```{r}
--(coefs[1,1] + coefs[3,1]*sd(subdat$MCseed))/coefs[2,1]
--(coefs[1,1] - coefs[3,1]*sd(subdat$MCseed))/coefs[2,1]
-```
-
-We could write the results like this: The probability of germination increased with longer duration of after-ripening (Fig. 1, Table 1). A seed of average size would have 50% probability of germinating when sown after 106.7 days of after-ripening. For a seed one standard deviation larger or smaller than the mean, this period would change to 129.4 days and 84.0 days, respectively.
 
 ## Poisson and negative-binomial regression
 
@@ -279,9 +256,9 @@ legend("topright", col=1:3, pch=16,
                 expression(paste(lambda, " = 10"))))
 ```
 
-The distribution of count data can sometimes by normalized through a log-transformation, and the log is indeed the link function of a Poisson regression model. The alternative method of log-transforming the data and then fitting a Gaussian model is problematic when there are zeros in the data. Adding a constant (e.g. 0.5 or 1) is sometimes an option, but is generally not recommended. A better option is to analyze the data in a GLM framework with Poisson-distributed errors and a log link function. We start as usual by simulating some data and fitting a model.
+The distribution of count data can sometimes by normalized through a log-transformation, and the log is indeed the link function of a Poisson regression model. The alternative method of log-transforming the data and then fitting a Gaussian model is problematic when there are zeros in the data. Adding a constant (e.g. 0.5 or 1) is sometimes an option, but is generally not recommended. A better option is to analyze the data in a GLM framework with Poisson-distributed errors and a log link function.
 
-```{r, fig.height=4, fig.width=7}
+```{r}
 x = rnorm(200, 10, 3)
 eta = -2 + 0.2*x
 y = ceiling(exp(eta + rpois(200, 0.3)))
@@ -296,7 +273,7 @@ m = glm(y~x, family="poisson")
 summary(m)
 ```
 
-When interpreting Poisson regressions, there are several things to keep in mind. First, as in all GLMs, the parameters are reported on the link scale, here log. Recall that the link scale has useful proportional properties, so that the slope can be interpreted roughly as the proportional change in y per unit change in x. To plot the fitted regression line, we have to back-transform the predicted values. This time we use the generic `predict` function to obtain the predicted values on the data scale, and to construct a 95% confidence polygon. The `predict` function takes as arguments a fitted model (here `m`), and a list of new data for which we want to make the predictions (here a sequence spanning the range of the predictor `x`, just as we have done whae making manual predictions). By specifying `type="response"` we get the prediction on the data scale (here counts), and by setting `se.fit=T` we will also get standard errors of the predictions, which we can use to construct a confidence interval.
+When interpreting Poisson regressions, there are several things to keep in mind. First, as in all GLMs, the parameters are reported on the link scale, here log. Recall that the link scale has useful proportional properties, so that the slope can be interpreted roughly as the proportional change in y per unit change in x. To plot the fitted regression line, we have to back-transform the predicted values.  This time we use the generic `predict` function to obtain the predicted values on the data scale, and to construct a 95% confidence polygon.
 
 ```{r, fig.height=4, fig.width=4}
 plot(x, y, las=1, col="darkgrey", pch=16)
@@ -326,7 +303,7 @@ Second, recall that the Poisson distribution has a single parameter $\lambda$ de
 We can quantify overdispersion in the data based on the fitted model by calculating the ratio of the residual deviance to the residual degrees of freedom. In the model above there is no serious overdispersion, because the residual deviance is only a little larger than the residual degrees of freedom. Let us construct an example with more serious overdispersion.
 
 
-```{r, fig.height=4, fig.width=7}
+```{r}
 set.seed(1)
 x = rnorm(200, 10, 3)
 eta = -2 + 0.2*x
@@ -349,11 +326,10 @@ library(MASS)
 m = glm.nb(y~x)
 ```
 
+\newpage
 ```{r}
 summary(m)
 ```
-
-Note especially that the estimated standard error is now much larger.
 
 ## Data exercise: bee distribution
 
@@ -369,66 +345,6 @@ Use a GLM to build a model explaining the distribution patterns of *Eulaema nigr
 dat = read.csv("datasets/Eulaema.csv")
 head(dat)
 ```
-
-### Example analysis
-
-As an example, we will ask whether the local abundance of *Eulaema nigrita* depends on forest cover, while accounting for variation in yearly rainfall. We could write the analysis methods as follows:
-
-To assess the response of *Eulaema nigrita* to variation in forest cover, we fitted a generalized linear model with negative binomial error distribution (accounting for severe overdispersion) and a log link function. To account for the expected greater abundance of the study species in drier areas, we included mean-centered mean annual precipitation as a covariate in the model.
-
-```{r}
-dat$mcMAP = dat$MAP - mean(dat$MAP, na.rm=T)
-m = glm.nb(Eulaema_nigrita ~ mcMAP + forest., data = dat)
-summary(m)
-1- m$deviance/m$null.deviance
-```
-
-To interpret the parameter estimates, it is easiest to backtransform the predicted values for some relevant scenarios to the original count scale. Because MAP is mean-centered, the intercept corresponds to the the number of bees counted when forest cover i zero and MAP is set to its mean. Because forest cover ranges from 0 to 1, an one unit increase corresponds to the entire data range, and we can easily compute the predicted number of bees in a fully forested landscape by simply adding the forest-cover parameter estimate to the intercept.
-
-```{r}
-coefs = summary(m)$coef
-exp(coefs[1,1])
-exp(coefs[1,1] + coefs[3,1])
-```
-
-### Making predictions from multiple-regression models
-
-To illustrate the response of *Eulaema nigrita* to local forest cover, while also representing the effect of rainfall, we plot the response curves for three different fixed values of mean annual precipitation.
-
-```{r, fig.height=4, fig.width=4}
-plot(dat$forest., dat$Eulaema_nigrita, col="grey", las=1,
-     xlab="Forest cover",
-     ylab="El. nigrita abundance")
-
-newforest = seq(min(dat$forest.), max(dat$forest.), length.out=200)
-newMAP = rep(mean(dat$mcMAP), length(newforest))
-y_hat = predict(m, newdata=list(mcMAP=newMAP, 
-                                forest.=newforest), 
-                type="response")
-lines(newforest, y_hat, lwd=2)
-
-newMAP2 = rep(mean(dat$mcMAP)+sd(dat$mcMAP), length(newforest))
-y_hat2 = predict(m, newdata=list(mcMAP=newMAP2, 
-                                forest.=newforest), 
-                type="response")
-
-newMAP3 = rep(mean(dat$mcMAP)-sd(dat$mcMAP), length(newforest))
-y_hat3 = predict(m, newdata=list(mcMAP=newMAP3, 
-                                forest.=newforest), 
-                type="response")
-
-lines(newforest, y_hat2, lwd=2, col="blue3")
-lines(newforest, y_hat3, lwd=2, col="firebrick")
-
-legend("topleft", lty=1, lwd=2, col=c(1, "blue3", "firebrick"), bty="n", 
-       legend=c("MAP = Mean",
-                "MAP = Mean + SD",
-                "MAP = Mean - SD"))
-
-abline(h=exp(coefs[1,1]), lty=2)
-abline(h=exp(coefs[1,1] + coefs[3,1]), lty=2)
-```
-
 
 ## Hurdle models
 
@@ -458,5 +374,15 @@ par(mfrow=c(1,3))
 plot(x, invlogit(y_hat1), las=1)
 plot(x, exp(y_hat2), las=1)
 plot(x, y_pred, las=1)
+```
+
+
+## Data exercise: bee distribution
+
+The following dataset includes the abundance of the bee species *Eulaema nigrita* in the Brazilian Atlantic forest, and a number of potential predictor variables including climate (mean annual temperature and precipitation, temperature and precipitation seasonality) and land use (proportion forest cover and land use heterogeneity defined as the Shannon diversity of local land-use classes). Use a GLM to build a model explaining the distribution patterns of *Eulaema nigrita*. Interpret the results and produce nice tables and figures.
+
+```{r}
+dat = read.csv("datasets/Eulaema.csv")
+head(dat)
 ```
 

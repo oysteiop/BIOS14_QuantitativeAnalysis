@@ -23,7 +23,7 @@ and a link function, $g$, that places the predictor on a Gaussian (normally-dist
 $$y = g^{-1}(\eta)$$
 Before going into details about GLMs, we need to recall some basics about the most common error distributions used in biological data analyses.
 
-### Mean-variance relations for the Binomial and Poisson distributions
+### The Binomial distribution
 
 The binomial distribution has two parameters, *n* and *p*, and summarizes a set of so-called Bernoulli trials with two possible outcomes, yes (1) or no (0). When we have performed more than one trial, we can compute the proportion *p* of the *n* trials with a positive outcome.
 
@@ -32,8 +32,6 @@ The theoretical variance of the binomial distribution is given by
 $\sigma^2 = np(1-p)$
 
 ```{r, fig.width=4, fig.height=4}
-#rbinom(3, 10, c(0.1, 0.5, 0.9))
-
 x = seq(from=0, to=1, by=0.01)
 v_b = x*(1-x) #Binomial variance
 plot(x, v_b, type="l", xlab="Probability", ylab="Theoretical variance", las=1)
@@ -41,7 +39,7 @@ plot(x, v_b, type="l", xlab="Probability", ylab="Theoretical variance", las=1)
 
 This is important to keep in mind, because it affects how we can compare the (proportional) variation of variables measures as proportions. If e.g. one population has a mean of 0.5, if will be expected to be much more variable than a second population with a mean of 0.1, just because there is less opportunity to vary. This is a now well-recognized problem e.g. in demography research, where the interest is often in comparing the extent of variation in life-history traits measured as proportions, such as germination or survival. One proposed solution is to scale the observed CV by the maximum based on the theoretical variance, but a perhaps simpler approach is to transform the proportional data in a way that makes them approach a normal distribution.
 
-One previously popular but now not recommended transformation is the so-called arcsin square-root transformation,
+One previously popular but now not recommended transformation is the so-called arcsine square-root transformation,
 
 $x' = \arcsin(\sqrt{x})$
 
@@ -83,6 +81,8 @@ legend("topleft", legend=c("Logit", "Probit"),
 ## Logistic regression
 As we have already seen, a logistic regression (GLM with binomial errors) is well suited for analysing binary data (or proportions).
 
+Below, we simulate data by first formulating a linear predictor $\eta$, then transforming the predicted values into probabilities (through the inverse logit transformation), and finally binarizing the data by sampling from the binomial distribution. The last step adds additional uncertainty by accounting for the stochasticity of the observation process.
+
 ```{r, fig.height=3.5, fig.width=10}
 x = rnorm(200, 10, 3)
 eta = -2 + 0.4*x + rnorm(200, 0, 2)
@@ -95,7 +95,7 @@ plot(x, p, las=1)
 plot(x, y, las=1)
 ```
 
-Above, we simulated data by first formulating a linear predictor $\eta$, then transforming the predicted values into probabilities (through the inverse logit transformation), and finally binarizing the data by sampling from the binomial distribution. The last step adds additional uncertainty by accounting for the stochasticity of the observation process.
+To fit the generalized model, we use the `glm` function and specify the error family (binomial) and link function (here *logit*).
 
 ```{r}
 m = glm(y~x, family=binomial(link="logit")) 
@@ -104,7 +104,7 @@ summary(m)
 
 The summary table includes, as always, a lot of information. The first thing to be aware is that when we are fitting a GLM, we obtain the parameter estimates on the link scale (here logit). Note that the parameter estimates are not too far from those we used to define the linear predictor $\eta$ when we simulated the data. These values are meaningful as such, and if the predictor variable has units of *mm*, the slopes have units of *log odds* $mm^{-1}$.
 
-To interpret the results biologically and to represent them in graphs, it can be useful to backtransform the predicted values to the probability scale. For example, we can ask how much the probability changes for a standard deviation increase in the predictor variable (though note that this is no longer a linear transform, so the consequences of increasing and decreasing the predictor by 1 standard deviation may be different).
+To interpret the results biologically and to represent them in graphs, it can be useful to backtransform the predicted values to the probability scale. For example, we can ask how much the probability changes for a standard deviation increase in the predictor variable (though note that this is no longer a linear transform, so the consequences of increasing and decreasing the predictor by one standard deviation may be different).
 
 Recall from the previous section that a log odds of 0 corresponds to a probability of 0.5  ($log(\frac{0.5}{1-0.5})=log(1)=0$). If we solve the model equation (the linear predictor) for 0, we can thus obtain the predictor value corresponding to a probability of 0.5, which is often a relevant benchmark.
 
