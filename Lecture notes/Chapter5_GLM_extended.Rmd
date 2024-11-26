@@ -369,7 +369,6 @@ library(MASS)
 m = glm.nb(y~x)
 ```
 
-\newpage
 ```{r}
 summary(m)
 ```
@@ -413,10 +412,11 @@ exp(coefs[1,1] + coefs[3,1])
 
 To illustrate the response of *Eulaema nigrita* to local forest cover, while also representing the effect of rainfall, we plot the response curves for three different fixed values of mean annual precipitation.
 
-```{r, fig.height=4, fig.width=4}
+```{r, fig.height=4, fig.width=4, fig.cap="Variation in Eulaema bee abundance along a forest-cover gradient, where 0 represents an entirely unforested landscape, and 1 a completely forested landscape. Regression lines illustrate the effect when mean annual precipitation is at its mean, one SD below the mean, and one SD above the mean"}
+
 plot(dat$forest., dat$Eulaema_nigrita, col="grey", las=1,
      xlab="Forest cover",
-     ylab="El. nigrita abundance")
+     ylab=expression(paste(italic("El. nigrita")," abundance")))
 
 newforest = seq(min(dat$forest.), max(dat$forest.), length.out=200)
 newMAP = rep(mean(dat$mcMAP), length(newforest))
@@ -480,13 +480,4 @@ plot(x, y_pred, las=1)
 
 
 Note especially that the estimated standard error is now much larger.
-
-## Data exercise: bee distribution
-
-The following dataset includes the abundance of the bee species *Eulaema nigrita* in the Brazilian Atlantic forest, and a number of potential predictor variables including climate (mean annual temperature and precipitation, temperature and precipitation seasonality) and land use (proportion forest cover and land use heterogeneity defined as the Shannon diversity of local land-use classes). Use a GLM to build a model explaining the distribution patterns of *Eulaema nigrita*. Interpret the results and produce nice tables and figures.
-
-```{r}
-dat = read.csv("datasets/Eulaema.csv")
-head(dat)
-```
 
