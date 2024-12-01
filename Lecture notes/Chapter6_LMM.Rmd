@@ -147,6 +147,9 @@ y_hat = predict(m, newdata=list(x1=newx, groupID=rep("Group5",200)), re.form=NUL
 
 EXERCISE: Fit a naïve linear model to the same data and evaluate how the two fitted models differ.
 
+### Model fit in mixed models
+In mixed models, we can 
+
 ### Data exercise: random-intercept models
 Pick any of the datasets we have worked with in the course that includes at least one grouping variable, and perform a random-intercept analysis (regression, ANCOVA or ANOVA). Produce relevant summary statistics and interpret the results biologically and statistically.
 

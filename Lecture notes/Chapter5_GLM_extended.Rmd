@@ -376,7 +376,7 @@ summary(m)
 
 The following dataset includes the abundance of the bee species *Eulaema nigrita* in the Brazilian Atlantic forest, and a number of potential predictor variables including climate (mean annual temperature and precipitation, temperature and precipitation seasonality) and land use (proportion forest cover and land use heterogeneity defined as the Shannon diversity ($-\Sigma_i p_i ln p_i$) of local land-use classes).
 
-The climate data from the *Worldclim* dataset are much used in ecological studies. The mean annual temperature (MAT) is given in degrees Celsius times 10, the annual precipitation in mm, the temperature seasonality (Tseason) as 100 times the standard deviation of the monthly temperature, and the precipitation seasonality (Pseason) as the CV of monthly precipitation (given as a percent, i.e. times 100). Why is the temperature seasonality measured as a standard deviation and the precipitation as a CV?
+The climate data from the *Worldclim* dataset, which is much used in ecological studies. The mean annual temperature (MAT) is given in degrees Celsius times 10, the annual precipitation in mm, the temperature seasonality (Tseason) as 100 times the standard deviation of the monthly temperature, and the precipitation seasonality (Pseason) as the CV of monthly precipitation (given as a percent, i.e. times 100). Why is the temperature seasonality measured as a standard deviation and the precipitation as a CV?
 
 The *effort* variable in the log number of hours of sampling, and the *method* variable indicates whether the collecting was done with hand nets, traps, or a combination of both.
 
@@ -407,6 +407,7 @@ coefs = summary(m)$coef
 exp(coefs[1,1])
 exp(coefs[1,1] + coefs[3,1])
 ```
+In the Results, we could then write "The abundance of *Eulaema nigrita* varied substantially along the forest-cover gradient (Fig. 1). Assuming average annual rainfall, predicted bee abundance ranged from 105 bees for a site in a completely unforested landscape to 28 bees in a completely forested landscape."
 
 ### Making predictions from multiple-regression models
 
