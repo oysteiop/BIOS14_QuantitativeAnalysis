@@ -1,12 +1,12 @@
 ---
 title: "Processing and Analysis of Biological Data"
-subtitle: "Path analysis and causal inference"
-author: "Øystein H. Opedal"
-date: "2 Dec 2023"
+subtitle: "Chapter 9. Causal inference"
+author: "Øystein H. Opedal, Department of Biology, Lund University"
+date: "`r Sys.Date()`"
 output: pdf_document
 fig_caption: yes
-always_allow_html: true
 pandoc_args: ["--wrap=none"]
+always_allow_html: true
 ---
 
 ```{r setup, include=FALSE}

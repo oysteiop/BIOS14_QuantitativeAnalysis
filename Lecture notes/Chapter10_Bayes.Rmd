@@ -1,8 +1,8 @@
 ---
 title: "Processing and Analysis of Biological Data"
-subtitle: "Bayesian methods"
-author: "Øystein H. Opedal"
-date: "10 Dec 2023"
+subtitle: "Chapter 10. Bayesian statistics"
+author: "Øystein H. Opedal, Department of Biology, Lund University"
+date: "`r Sys.Date()`"
 output: pdf_document
 fig_caption: yes
 pandoc_args: ["--wrap=none"]
