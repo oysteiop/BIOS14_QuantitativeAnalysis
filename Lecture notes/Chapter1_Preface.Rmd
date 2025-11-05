@@ -13,13 +13,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Preface
-These lectures notes are written for the course BIOS14 at Lund University. They will cover what I consider to be necessary (or at least useful) knowledge about data analysis and quantitative methods in ecology, evolutionary biology, and related fields. This document is work-in-progress and is not comprehensive. I therefore strongly encourage you to consult the many excellent text books available on "biostatistics", `R`, quantitative biology etc.
+These lectures notes are written for the course BIOS15 at Lund University. They will cover what I consider to be necessary (or at least useful) knowledge about data analysis and quantitative methods in ecology, evolutionary biology, and related fields. This document is work-in-progress and is not comprehensive. I therefore strongly encourage you to consult the many excellent text books available on "biostatistics", `R`, quantitative biology etc.
 
 Beyond these lecture notes, the main course literature is the book 
 
 Gerry P Quinn and Michael J Keough. 2002. Experimental Design and Data Analysis for Biologists, Cambridge University Press, ISBN: 9780521009768.
 
-Like most biostatistics texts this is a reference in which to look up specific topics, rather than a book to be read chapter by chapter. Personally I have also found Michael Crawleys' brick "The R Book" useful in the past, it's as much a statistics text as an `R` text.
+Like most biostatistics texts this is a reference in which to look up specific topics, rather than a book to be read chapter by chapter. Personally I have also found Michael Crawley's brick "The R Book" useful in the past, it's as much a statistics text as an `R` text.
 
 What separates this document (and this course) from "typical" texts in biostatistics is the limited focus on statistical hypothesis testing. Although we will discuss key aspects of hypothesis testing in the traditional sense, focus will be throughout on quantification, parameter estimation, and biological interpretation of results. This choice is made in an attempt to mitigate an issue that occurs frequently in scientific writing, namely that the presentation of results in biological publications has increasingly tended towards a focus on statistical hypothesis testing ("significance testing"), at the cost of focus on the biological significance of any result obtained. An example is sentences on the form "the treatment significantly (P < 0.05) affected the growth of plants" in place of an appropriate sentence such as "plants in the high-fertilizer treatment grew 40% larger than those in the low-fertilizer treatment". There is now a growing focus on turning this trend (e.g. Wasserstein & Lazar 2016), and this must start with the way statistics are taught in biostatistics courses such as this one.
 
@@ -27,19 +27,19 @@ Wasserstein, R. L., and N. A. Lazar. 2016. The ASA Statement on p-Values: Contex
 
 Beyond quantification and data analysis, the following chapters will also introduce some basic data handling, scientific programming, and graphics. These skills are by now essential for most practicing researchers, and I like to think the skills will be useful also for those that put their Biology education to use outside of academia.
 
-The principles of statistical analysis are closely related to principles of experimental design, that often dictate the appropriate analysis. Although the present course is not focused on experimental design, we will therefore make reference to design where relevant, and I recommend revisiting books on experimental design. 
+The principles of statistical analysis are closely related to principles of experimental design, that often dictate the appropriate analysis. Although the present course is not focused on experimental design, we will therefore make reference to design where relevant, and I recommend revisiting books on experimental design. One classic is Ruxton & Colegrave's "Experimental Design for the Life Sciences".
 
 To understand the importance of quantification and biological interpretation in Biology, we will start with a brief introduction to measurement theory.
 
 ## Measurement and meaning in biology
-Measurement theory is concerned with the relationship between measurements and the theoretical context in which they will function. In other words, what are the numbers we record meant to represent? The title of this section is shared with an important paper published in 2011 by evolutionary biologist David Houle and colleagues, in which they pointed out the common disconnect in Biology between the measurements taken in the field or laboratory, and the biological properties they are meant to represent. This exemplifies a more general problem across Biology, where the interpretation of measurements and analyses fails to focus on the biological questions that motivated the study in the first place. Before reading on, I strongly suggest to read at least the first pages of Houle et al. 2011, to get a grasp of the problem at hand.
+Measurement theory is concerned with the relationship between measurements and the theoretical context in which they will function. In other words, what are the numbers we record meant to represent? The title of this section is shared with an important paper published in 2011 by evolutionary biologist David Houle and colleagues, in which they pointed out the common disconnect in Biology between the measurements taken in the field or laboratory, and the biological properties they are meant to represent. This exemplifies a more general problem across Biology, where the interpretation of measurements and analyses fails to focus on the biological questions that motivated the study in the first place. Before reading on, I strongly suggest reading at least the first pages of Houle et al. 2011, to get a grasp of the problem at hand.
 
 Houle, D., C. Pélabon, G. P. Wagner, & T. F. Hansen. 2011. Measurement and meaning in biology. Quarterly Review of Biology 86:3-34.
 
 ### Scale types and transformations
 The concept of scale types has rarely been taught in biology, yet any quantitative measurement is placed on a specific scale type, with some associated properties such as permissible transformations. The perhaps most familiar scale type is the *ratio scale*, represented for example by any linear size measurement (with units such as *mm* or *m*). Importantly, the ratio scale has a natural zero, and negative values do not occur.
 
-In contrast, consider the measurement of days since January 1st (often used to record for example breeding dates of birds). Dates are on an *interval scale*, and lacks a natural zero (i.e., the zero is chosen arbitrarily). This has consequences, for example, for how we compare raw and proportional variances among groups (see below). On this topic, it is common to see the number of days since January 1st labelled as a 'Julian date'. I write this on the 20th of October 2022, and the Julian date is 22293 (the number of days since the beginning of the Julian period).
+In contrast, consider the measurement of days since January 1st (often used to record for example breeding dates of birds). Dates are on an *interval scale*, and lack a natural zero (i.e., the zero is chosen arbitrarily). This has consequences, for example, for how we compare raw and proportional variances among groups (see below). On this topic, it is common to see the number of days since January 1st labelled as a 'Julian date'. I write this on the 20th of October 2022, and the Julian date is 22293 (the number of days since the beginning of the Julian period).
 
 A third common scale type in biology is the *ordinal scale*, where measurements are in order (e.g. 2 is larger than 1), but the intervals between values are not fixed (i.e. the difference between 1 and 2 may differ from the difference between 2 and 3). Examples include where species are scored within a plot as "dominant", "common", "rare", and "very rare". Most will agree that "common" > "rare", but it does not make sense to translate these categories into numerical values (e.g. 4 for "dominant", 3 for "common" etc.) and then compute the mean.
 
@@ -48,7 +48,7 @@ When measurements are unordered categories (e.g. red vs. blue vs. green), they a
 ## Summary statistics
 Before departing on any data analysis, it is advisable to explore the data at hand both graphically, and by obtaining relevant summary statistics. Summary statistics are those that aim to describe the properties of the data. For example, the central tendency of a dataset is generally measured by the arithmetic mean (typically denoted $\mu$ or $\bar{x}$), median, or, less frequently, the mode. Which of these to choose depends in part on the distribution of the data. If the data are skewed (tendency towards large or small values), the mean can give a misleading picture of the central tendency. The same issue arises if there are extreme values (outliers) that will tend to affect the mean much more than they affect the median. In some cases, a good option can be to report both the mean and the median, which together will give a more complete impression of the data distribution. For ordinal or nominal variables, the mode may be a suitable option.
 
-Another measure of central tendency that buffers the influence of large values is the geometric mean $(\Pi_{i=1}^n x_i)^\frac{1}{n}$. The geometric mean is equal to the exponent of the mean of the natural logs of the data. The geometric mean increases towards the arithmetic mean (here 20, solid line) with decreasing variance in the data. The slight scatter in the plot below arises from the use of a randomly generated dataset to generate each datapoint.
+Another measure of central tendency that buffers the influence of large values is the geometric mean $(\Pi_{i=1}^n x_i)^\frac{1}{n}$. The geometric mean is equal to the exponent of the mean of the natural logs of the data. The geometric mean increases towards the arithmetic mean (here 20, solid line) with decreasing variance in the data (Figure 1). The slight scatter in the plot below arises from the use of a randomly generated dataset to generate each datapoint.
 
 ```{r, fig.height=4, fig.width=4, echo=F, fig.cap="Relationship between arithmetic (20, solid line) and geometric mean with increasing variance in the data"}
 out = NULL
@@ -60,9 +60,10 @@ d = d[which(d>0)]
 out[i] = exp(mean(log(d)))
 }
 
-plot(sdvals, out, las=1,
+plot(sdvals, out, las=1, ylim=c(17.5, 20.5),
      xlab="Standard deviation", ylab="Geometric mean")
 abline(h=20)
+text(7.5, 20.22, "Arithmetic mean")
 ```
 
 One common application of the geometric mean in biology is the evaluation of the long-term success of a given (evolutionary) strategy, such as the fitness consequences of variance-reducing strategies such as bet-hedging. A bet-hedging strategy is sometimes defined as one that maximizes the geometric rather than arithmetic mean fitness (by reducing e.g. the among-year variance in reproductive success).
@@ -111,7 +112,7 @@ hist(x, las=1, main="")
 `R` functions know the position of arguments, so that `rnorm(100, 5, 1)` will give the same result as above.
 
 ### Bootstrapping
-Bootstrapping is a common resampling technique used to assess uncertainty in variables. This can be especially relevant when the variable of interest is already a summary of a statistical population, such as a coefficient of variation ($CV$). As a first example, we will use bootstrapping to obtain the standard error of the mean, which we have already seen is given theoretically by $SE = \sqrt{Var/n}$.
+Bootstrapping is a common resampling technique used to assess uncertainty in variables. This can be especially relevant when the variable of interest is already a summary of a statistical population, such as a coefficient of variation ($CV$). As a first example, we will use bootstrapping to obtain the standard error of the mean, which we have already seen is given theoretically by $SE = \sqrt{Var/n} = SD/\sqrt{n}$.
 
 To ensure reproducibility of the results (i.e. that we will get the same result every time, even when we work on different computers), we set the "seed" of the random number generator using the `set.seed()` function.
 

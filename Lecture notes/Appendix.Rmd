@@ -22,20 +22,22 @@ To start a project, simply click `file/New Project`. You will see that there is 
 
 Another common "mistake" is to do way too many things within one R file. When working with "real" analyses, it is good style to keep for example one `R` file for formatting the data (which you of course will not do in Excel!) and then writing clean files for the analyses. These could include one file for performing e.g. model fitting, and another to produce summaries and graphics based on the results. For simpler analyses this can of course all be done within one file, but it is good to start practicing. Once you have your own custom-written functions, separate them from the main workflow and load them as needed using the `source` function.
 
-#### Formatting and importing data
+### Formatting and importing data
+
 Importing datafiles into `R` can be a real hassle in the start. In RStudio there is an "Import Dataset" button, but this often involves excessive clicking and somehow defeats the purpose of a code-based environment. It is better to figure out a file format that works, and then we have the code and can import the data in a second each time we open the `R` file.
 
 Good formats for importing into `R` are .csv and .txt. I generally enter the data in Excel, and then save the file in either of those formats. A couple of points about organizing data in Excel:
 
-1. Avoid empty cells, put `NA` instead. There are ways to make `R` insert `NA`s in empty cells, but it is always safe to add them already during data entry.
+1. Avoid empty cells, put `NA` instead. There are ways to make `R` insert `NA`s in empty cells, but to be safe it is better to add them already during data entry.
 
-2. Avoid spaces, use underscore (_) instead. This will avoid problems where `R`understands 'body size' as two variables instead of one (body_size). Some also like to keep the units in the variable names, i.e. 'body_size_kg'.
+2. Avoid spaces, use underscore (_) instead. This will avoid problems where `R` understands 'body size' as two variables instead of one (body_size). Some also like to keep the units in the variable names, i.e. 'body_size_kg'.
 
 `R` has functions to import many kinds of data. I typically use `read.table` for text files, and `read.csv` for .csv files. On Windows, I often need to use `read.csv2` instead, for some reason. Pay attention to the arguments of these functions, especially things like `sep`, `dec`, and `header` that tells how the data specify string separation, decimal places, and whether there are variable names (column headers) in the data file.
 
 If you want to import Excel files directly, the `readxl` package seems to work well. It allows you to specify a specific sheet within an excel file, which is sometimes useful, and also seems to work well for inserting `NA`s for empty cells which could be good if you have huge data with many empty cells. But again, find a method that works for you and you will be fine.
 
-#### Reproducibility and version control
+### Reproducibility and version control
+
 All of this is directly related to the issue of reproducibility. More and more journals now require code archiving, and by working in a tidy way we are ready to submit our code at the time of submitting the paper.
 
 To take this one step further, we can use a system for version control like GitHub. This also provides us with backup in case our computer dies, and an easy way to publish the code (and data, although this is apparently not the recommended way of publishing data).
@@ -62,7 +64,7 @@ Sometimes we want to perform an operation only under certain conditions. We can 
 ```{r}
 out = NULL
 for(i in 1:length(x)){
-  if(i>10){
+  if(x[i]>10){
     out[i] = x[i]*2 
   }
   else{
@@ -75,7 +77,7 @@ out
 A shortcut for *if* and *else* is the function `ifelse`.
 
 ```{r}
-ifelse(x>25, 1, 0)
+ifelse(x>10, 1, 0)
 ```
 
 A final useful programming argument is *while*, which makes a process continue until a specific condition is reached. For example, this program draws values of 1-10 until the value 21 is reached.
@@ -89,7 +91,7 @@ out = 0
 ```
 
 ### Writing functions
-`R`-functions takes arguments, performs operations and, often, returns some results. Base `R` does not come with a built-in function to compute standard errors, so let's make out own.
+`R`-functions take arguments, perform operations and, often, return some results. Base `R` does not come with a built-in function to compute standard errors, so let's make out own.
 
 ```{r}
 computeSE = function(data){
