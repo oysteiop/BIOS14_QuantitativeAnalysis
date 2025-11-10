@@ -129,8 +129,8 @@ To understand the lines of code below, recall that you can access the help file 
 ```{r}
 out = NULL
 for(i in 1:1000){
-  sample = sample(x, replace=TRUE)
-  out[i] = mean(sample)
+  sample1 = sample(x, replace=TRUE)
+  out[i] = mean(sample1)
 }
 ```
 

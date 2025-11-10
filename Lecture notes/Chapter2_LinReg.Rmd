@@ -42,7 +42,7 @@ The aim of regression analysis is to estimate the linear relationship between a 
 m = lm(y~x)
 ```
 
-The object `m` now holds the fitted model. Let's first extract the model coefficients (parameter estimates) and produce some plots of the residuals. To do so we first pull out the parameter estimates from the fitted model. In general, to extract a specific value or component of an object, we can call the `str` function, which will return a list of components available within the object. We then use `$` to index the component we want to extract (here `m$coef`).
+The object `m` now holds the fitted model. Let's first extract the model coefficients (parameter estimates) and produce some plots of the residuals. To do so we first pull out the parameter estimates from the fitted model. In general, to extract a specific value or component of an object, we can call the `str` function, which will return a list of components available within the object. We then use `$` to index the component we want to extract (here `m$coef`). Try to call `str(m)` to see which other components we can extract from the model object.
 
 ```{r}
 cf = m$coef
@@ -68,7 +68,7 @@ hist(residuals(m), xlab="", las=1)
 
 These residuals are fine, as is of course fully expected given that we simulated the data from the (Gaussian) linear model. There are many other ways of assessing whether the model assumptions are met, see for example what happens if you call `plot(m)` after setting `par(mfrow=c(2,2))`. Notice that the `plot` function is *generic*, it produces a different result depending on what is fed to it. If we call `plot(x, y)` when both `x` and `y` are continuous variables, we get a scatterplot. If `x` is a factor, we get a boxplot.
 
-Above we also added the fitted regression line through the ready-made `abline` function. To keep the regression line within the data range, it is better to make predictions for new values of $x$ spanning the data range and add the regression line using the `lines` function.
+Above we also added the fitted regression line through the built-in `abline` function. To keep the regression line within the data range, it is better to make predictions for new values of $x$ spanning the data range and add the regression line using the `lines` function.
 
 ```{r, fig.height=4, fig.width=4, fig.cap="Scatterplot with fitted regression line"}
 newx = seq(min(x), max(x), length.out=200)
@@ -80,7 +80,7 @@ plot(x, y, las=1,
 lines(newx, predy)
 ```
 
-After checking that the residuals are fine, let's now have a look at the results of our linear model fit. The `summary` function is also generic.
+After checking that the residuals are fine, let's now have a look at the results of our fitted linear model. The `summary` function is also generic.
 
 ```{r}
 summary(m)
@@ -98,7 +98,7 @@ The $P$-value is the probability of observing the observed value of the test sta
 
 Because the $P$-value is obtained by comparing our observed test statistic $t$ to its known distribution, and $t$ increases with sample size, it follows that when the sample size increases, anything will at some point be statistically significant. This is the reason why there are now increasing calls for abandoning $P$-values as the standard measure of statistical significance. That being said, $P$-values do provide a "quick and dirty" way of assessing statistical support, and can help guide our interpretation of the results. We will later return to alternative methods of evaluating statistical support, but for now we focus on the more important point: interpretation of the results needs to be done in light of the parameter estimates, their units, and their consequences within the context of the analysis/study.
 
-EXERCISE: Use non-parametric bootstrapping to derive a standard error for the slope of the linear regression above. To do so, produce a data frame holding the `x` and `y` values, sample from this dataset (with replacement), fit the model, and save each estimate for the slope of y on x. The samples will give the sampling distribution for the slope, and its standard deviation will provide an estimate of the standard error.
+OPTIONAL EXERCISE: Use non-parametric bootstrapping to derive a standard error for the slope of the linear regression above. To do so, produce a data frame holding the `x` and `y` values, sample from this dataset (with replacement), fit the model, and save each estimate for the slope of y on x. The samples will give the sampling distribution for the slope, and its standard deviation will provide an estimate of the standard error.
 
 ```{r}
 df = data.frame(x, y)
@@ -123,7 +123,7 @@ cov(y,x)/var(x)
 
 Although regression slopes are very often reported without any units, it is important to remember that the slopes in fact carry the units of both the response and predictor variables. In our example the response and predictor are both measured in *mm*, and the slope is therefore 0.43 *mm/mm*. When we report this in the text, we generally want also to report the standard error, i.e. $slope = 0.43 \pm{0.04}$ *mm/mm*. Thus, in our example, the response variable increases by 0.43 *mm* per *mm* increase in the predictor. The small standard error (relative to the slope estimate) directly indicates the strong statistical support.
 
-To facilitate further interpretation, we can also report the consequences of a realistic change in the predictor variable. Let's say that we want to know how much $y$ changes for a one standard deviation change in $x$. To do so we compute the difference in the predicted values when $x$ is at its mean (second term below), and when $x$ in at its mean + one standard deviation (first term below). Why can we ignore the intercept here?
+To facilitate further interpretation, we can also report the consequences of a realistic change in the predictor variable. Let's say that we want to know how much $y$ changes for a one standard deviation change in $x$. To do so we compute the difference in the predicted values when $x$ is at its mean (second term below), and when $x$ is at its mean + one standard deviation (first term below). Why can we ignore the intercept here?
 
 ```{r}
 (cf[2]*(mean(x) + sd(x))) - (cf[2]*mean(x))
@@ -158,7 +158,7 @@ cf[2]^2*var(x)
 ### Exercise: fitting a linear regression to real data
 Choose any dataset you may have involving a continuous response variable and a continuous predictor. Fit a simple linear regression, interpret the results, produce a nice figure including the fitted regression line, and write simple methods and results presenting the analysis and results.
 
-If you don't have any data, use the dataset `bird_allometry` in the datasets folder. This dataset contains body mass and brain mass for males and females of different bird species. The scaling of brain size (or other body parts) with body size is referred to as the study of *allometry*, and you may want to read about these analyses before fitting your models. As a hint, the scaling of parts of a body with body size is expected to follow a power-law relationship on the form $y = ax^b$, which can be linearized through the logarithmic transformation $log(y) =log(a) + b \times log(x)$.
+If you don't have any data, use the dataset `bird_allometry`. This dataset contains body mass and brain mass for males and females of different bird species. The scaling of brain size (or other body parts) with body size is referred to as the study of *allometry*, and you may want to read about these analyses before fitting your models. As a hint, the scaling of parts of a body with body size is expected to follow a power-law relationship on the form $y = ax^b$, which can be linearized through the logarithmic transformation $log(y) =log(a) + b \times log(x)$.
 
 ```{r}
 birds = read.csv("datasets/allometry/bird_allometry.csv")
@@ -185,15 +185,15 @@ After checking that the residuals look OK, we look at the model fit for the male
 hist(residuals(mm))
 summary(mm)
 ```
-The allometric intercept (here -1.91) varies across taxa and is sometimes of interest when we are comparing allometric relationships across taxa. Here we will focus on the allometric slope, which tells us about how brain size scales with body size. The slope is much less than 1, which means that the scaling is less than proportional. The value 0.55 means that brain size increase by 5.5% per 10% increase in body size.
+The allometric intercept (here -1.91) varies across taxa and is sometimes of interest when we are comparing allometric relationships across taxa. Here we will focus on the allometric slope, which tells us about how brain size scales with body size. The slope is much less than 1, which means that the scaling is less than proportional. The value 0.55 means that brain size increases by 5.5% per 10% increase in body size.
 
-The scaling relationship is similar, but a little bit steeper for females. Based on the standard errors of the slopes, the difference appears statistically supported. What kind of analysis could we do to directly estimate the difference in slope?
+The scaling relationship is similar but a little bit steeper for females. Based on the standard errors of the slopes, the difference appears statistically supported. What kind of analysis could we do to directly estimate the difference in slope between males and females?
 
 ```{r}
 summary(mf)
 ```
 
-Let us now produce a scatterplot illustrating our results.
+Let us now produce a scatterplot illustrating our results. Can you find out from the data which are the species that fall outside the main cloud (e.g. on the upper right)? 
 
 ```{r, fig.height=4, fig.width=4, echo=F, fig.cap="Scaling relationship between brain size and body size for 483 (females) and 615 (males) bird species"}
 xx = seq(min(log(males$body_mass)), max(log(males$body_mass)), 
