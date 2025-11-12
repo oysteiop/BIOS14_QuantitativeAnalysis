@@ -56,7 +56,7 @@ x = c(rnorm(50, 10, 3), rnorm(50, 13, 3), rnorm(50, 14, 3))
 plot(groups, x, las=1, xlab="", ylab="Body size (g)")
 ```
 
-Plots like this are called "boxplots", and can be useful for visualising the distribution of data across factor levels or other groups. With the default settings, the boxes range from the 1st to the 3rd quartile, i.e. they span 50% of the data. The thick lines show the median, the "whiskers" extend to 1.5 times the inter-quantile range, and individual circles show outliers. This representation allows us to assess whether the data are roughly normally distributed within each group, which will tend to yield normally distributed residuals within each group, an assumption of the ANOVA model.
+Plots like this are called "boxplots", and can be useful for visualising the distribution of data across factor levels or other groups. With the default settings, the boxes range from the 1st to the 3rd quartile, i.e. they span 50% of the data. The thick lines show the median, the "whiskers" extend to 1.5 times the inter-quartile range, and individual circles show outliers. This representation allows us to assess whether the data are roughly normally distributed within each group, which will tend to yield normally distributed residuals within each group, an assumption of the ANOVA model.
 
 Boxplots are not directly useful for discussing ANOVA and variance partitioning though, and plots that show all the data can be more informative. Here is a rather elaborate plot combining a scatterplot (with values slightly "jittered" along the x-axis for clarity) and a boxplot.
 
@@ -88,14 +88,14 @@ anova(m)
 
 The ANOVA table contains a lot of information. First, we learn about the number of degrees of freedom for each variable. For the `groups` variable (our focal factor), the 2 degrees of freedom is the number of groups in our data (3) - 1. The minus 1 comes from the fact that we had to estimate the mean in the data to obtain our sums of squares (the sum of the square deviations of data points from their group means). Similarly for residual degrees of freedom, we have 150 - 2 - 1, where the 2 comes from estimating the two contrasts (difference of group 2 and 3 from group 1), and the 1 is still the estimated mean.
 
-The `Sum Sq` are the sums of squares, i.e. the sum of the squared deviations of each observation from the grand mean. The total sum of squares ($SS_T$) divided by $n-1$ gives the total variance of the sample.
+The `Sum Sq` are the sums of squares, i.e. the sum of the squared deviations of each observation from the grand mean. The total sum of squares ($SS_T$) divided by $n-1$ gives the total variance of the sample. Call the `var` function to confirm that this is the case.
 
 ```{r}
 SS_T = 319.97+1200.43
 SS_T/(150-1)
 ```
 
-```{r}
+```{r, echo=F}
 var(x)
 ```
 
@@ -105,7 +105,7 @@ We can easily get the proportion of variance explained by the `groups` variable,
 319.97/SS_T
 ```
 
-The `Mean Sq` is the variance attributable to each variable, conventionally called the mean sum of squares (the sum of squares divided by the degrees of freedom). The F-ratio (the test statistic in an ANOVA) is computed as the mean sum of squares for the focal variable divided by the mean residual sum of squares. Thus, it represents the ratio of the among-group variance to the within-group variance, but also the sample size which gives the residual degrees of freedom and thus, all else being equal, larger sample gives lower mean sum of squares and thus higher F-ratios and lower $P$-values.
+The `Mean Sq` is the variance attributable to each variable, conventionally called the mean sum of squares (the sum of squares divided by the degrees of freedom). The F-ratio (the test statistic in an ANOVA) is computed as the mean sum of squares for the focal variable divided by the mean residual sum of squares. Thus, it represents the ratio of the among-group variance to the within-group variance, but also the sample size which gives the residual degrees of freedom and thus, all else being equal, larger sample size gives lower mean sum of squares and thus higher F-ratios and lower $P$-values.
 
 In an ANOVA, a statistically supported among-group variance component such as the one above indicates that at least one group mean is different from the others. To further assess which groups are different, we can extract the typical summary table of the linear model.
 
@@ -138,7 +138,7 @@ confint(m)
 ## Two-way ANOVA
 Analyses of variance can also be performed with more than one factor variable. If we have two factors, we can talk about two-way ANOVA, and so on. A typical example from biology is when we have performed a factorial experiment, and want to assess the effects of each experimental factor and their potential interaction.
 
-With two factors, a full model can be formulated as `y ~ factor1 * factor2`. Recall that in `R` syntax, the * means both main effects and their interaction, while a : means only the interaction. A detectable interaction term in this model would indicate that the effect of factor 1 depends on the level of factor 2 (and *vice versa*). If we are analysing an experiment where we have manipulated both temperature and nitrogen supply, an interaction would mean that the effect of temperature depend on the nitrogen level.
+With two factors, a full model can be formulated as `y ~ factor1 * factor2`. Recall that in `R` syntax, the * means both main effects and their interaction, while a : means only the interaction. A detectable interaction term in this model would indicate that the effect of factor 1 depends on the level of factor 2 (and *vice versa*). If we are analysing an experiment where we have manipulated both temperature and nitrogen supply, an interaction would mean that the effect of temperature depends on the nitrogen level.
 
 ### Data exercise: analysing a factorial experiment
 The following data are from an experiment where female butterflies reared on two different host plants were allowed to oviposit on the same two host plants. The data include developmental time for the larvae, the adult weight, and the growth rate of the larvae.
