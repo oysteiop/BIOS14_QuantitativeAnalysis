@@ -100,11 +100,11 @@ CV2_Total = CV2_Among + CV2_Within
 Finally it is nice to organize all these values in a table.
 
 ```{r}
-df = data.frame(Mean = mean(x1), SD = sd(x1), 
+df = data.frame(Mean = mean(y), SD = sd(y), 
                 Among = VarAmongGroups/(VarAmongGroups+VarWithinGroups)*100,
                 Within = VarWithinGroups/(VarAmongGroups+VarWithinGroups)*100,
                 CV2_Among, CV2_Within, CV2_Total)
-df = apply(df, MARGIN=2, FUN=round, digits=2)
+df = apply(df, MARGIN=2, FUN=round, digits=3)
 df
 ```
 
