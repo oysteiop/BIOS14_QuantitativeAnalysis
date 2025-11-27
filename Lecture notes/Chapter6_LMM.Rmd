@@ -60,7 +60,7 @@ m = glmmTMB(y ~ 1 + (1|groupID), data=data)
 summary(m)
 ```
 
-The summary table is familiar, and contains some of the same information as we have seen in simple linear models and in GLMs. To extract only the part related to the random effect, we can call the function `VarCorr`, and then extract the variances (recall it´s the variances that are additive, not the standard deviations). Note that we have to extract an "attribute" of the VarCorr object, rather than e.g. a slot in a list.
+The summary table is familiar, and contains some of the same information as we have seen in simple linear models and in GLMs. To extract only the part related to the random effect, we can call the function `VarCorr`, and then extract the variances (recall it's the variances that are additive, not the standard deviations). Note that we have to extract an "attribute" of the VarCorr object, rather than e.g. a slot in a list.
 
 ```{r}
 VarCorr(m)
