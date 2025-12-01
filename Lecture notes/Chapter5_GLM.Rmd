@@ -260,7 +260,7 @@ The distribution of count data can sometimes by normalized through a log-transfo
 ```{r}
 x = rnorm(200, 10, 3)
 eta = -2 + 0.2*x
-y = ceiling(exp(eta + rpois(200, 0.3)))
+y = ceiling(exp(eta) + rpois(200, 0.3))
 
 par(mfrow=c(1,2))
 plot(x, eta, las=1)

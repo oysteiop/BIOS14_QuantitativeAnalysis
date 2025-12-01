@@ -66,7 +66,7 @@ AICTab$w = round(lh/sum(lh), 2)
 AICTab
 ```
 
-As expected, the likelihood is greater (less negative) for the more complex model ($m1$), but after penalizing for the number of parameters, $m2$ is the highest ranked and thus best supported. A traditional rule of thumb has been that 2 $AIC$ units indicates strong support. A difference of 2 $AIC$ units corresponds roughly to where a *likelihood ratio test* would be statistically significant (read P<0.05), so this practice in one way defeats the purpose of moving from significance testing to model comparison.
+As expected, the likelihood is greater (less negative) for the more complex model ($m1$), but after penalizing for the number of parameters, $m2$ is the highest ranked and thus best supported. A traditional rule of thumb has been that 2 $AIC$ units indicates strong support. A difference of 2 $AIC$ units corresponds roughly to where a *likelihood ratio test* would be statistically significant (read P<0.05), so this practice in one way defeats the purpose of moving from significance testing to model comparison. However, AIC comparisons could allow us to compare a null model to a more complex model (with more than one additional parameter), and hence provide support for a specific biological model over a null model.
 
 ### Data exercise: Model selection
 Pick any of the datasets we have worked with in this course that includes more than one candidate predictor variable. Use AIC to perform model selection, produce a neat summary table with an informative legend, and interpret the results (biologically and statistically).
@@ -79,5 +79,4 @@ Second, when performing model selection (at least for fixed effects), we must co
 A general approach to fixed-effects AIC model selection in mixed models is thus to select the highest ranked model based on models fitted with ML, and then refit the highest ranked model with REML to obtain the parameter estimates.
 
 For choosing random structures either ML or REML can be used (as long as the fixed effects are kept constant), with REML sometimes recommended.
-
 
