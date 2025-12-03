@@ -145,15 +145,16 @@ solve(eigen(C)$vectors)[1:2, 1:2]
 
 ## Principal Component Analysis
 
-Eigenanalysis is closely related to principal component analysis. In its simplest form, the principal components are the same as the eigenvectors. Let us derive some new traits along the eigenvectors of $\textbf{C}$.
+Eigenanalysis is closely related to principal component analysis. The principal components are the same as the eigenvectors. To see that this is the case, let us compute the covariance matrix for the dataset `X` and derive some new traits along its eigenvectors.
 
 ```{r}
+CX = cov(X)
 dim(as.matrix(X))
-dim(as.matrix(eigen(C)$vectors[,1]))
+dim(as.matrix(eigen(CX)$vectors[,1]))
 
-t1 = as.matrix(X) %*% eigen(C)$vectors[,1]
-t2 = as.matrix(X) %*% eigen(C)$vectors[,2]
-t3 = as.matrix(X) %*% eigen(C)$vectors[,3]
+t1 = as.matrix(X) %*% eigen(CX)$vectors[,1]
+t2 = as.matrix(X) %*% eigen(CX)$vectors[,2]
+t3 = as.matrix(X) %*% eigen(CX)$vectors[,3]
 
 c(var(X[,1]), var(X[,2]), var(X[,3]))
 c(var(t1), var(t2), var(t3))
@@ -168,21 +169,19 @@ var(X[,1]) + var(X[,2]) + var(X[,3])
 
 The eigenvectors are *orthogonal*, i.e. they are not correlated with each other.
 
-A very similar operation is performed by several `R` packages for principal component analysis, e.g. `prcomp`. The principal components are not exactly the same as defining traits along the eigenvectors, but are subject to some further rotation. However, the principal components will be strongly correlated with the traits defined along the eigenvectors.
+A very similar operation is performed by several `R` packages for principal component analysis, e.g. `prcomp`.
 
 ```{r}
 pca = princomp(X)
 summary(pca)
 ```
 
-The proportion of variance explained by each principal component is computed as the variance of each principal component divided by the total, which is basically equal to the corresponding eigenvalue divided by the sum of the eigenvalues, i.e. $\lambda_i/\sum\lambda$.
+The proportion of variance explained by each principal component is computed as the variance of each principal component divided by the total, which is equal to the corresponding eigenvalue divided by the sum of the eigenvalues, i.e. $\lambda_i/\sum\lambda$.
 
 ```{r}
 pca$sdev^2/sum(pca$sdev^2)
-eigen(C)$values/sum(eigen(C)$values)
+eigen(CX)$values/sum(eigen(CX)$values)
 ```
-
-The small difference is again due to how the principal components are calculated, but biologically the interpretation is the same.
 
 To understand how each principal component is constructed, we look at the loadings of each original variable onto the PCs.
 
