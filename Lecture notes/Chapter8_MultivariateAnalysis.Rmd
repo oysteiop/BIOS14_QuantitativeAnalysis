@@ -34,11 +34,11 @@ EXERCISE: One way to confirm that a matrix is symmetrical is to show that it is 
 C == t(C)
 ```
 
-Correlations are standardized covariances, i.e. they are the covariances between standardized variables (mean = 0, sd = 1). We can compute the correlation between two variables as 
+Correlations are standardized covariances, i.e. they are the covariances between standardized (z-transformed) variables (mean = 0, sd = 1). We can compute the correlation between two variables as 
 
 $Cor(x,y)=Cov(x,y)/\sqrt{Var(x)Var(y)}$.
 
-EXERCISE: Translate the covariance matrix into a correlation matrix.
+EXERCISE: Translate the covariance matrix into a correlation matrix. One approach would be to first define an empty correlation matrix, and then use two nested *for*-loops to populate the matrix. 
 
 ```{r, echo=F}
 cormat = matrix(NA, nrow=3, ncol=3)
@@ -145,7 +145,7 @@ solve(eigen(C)$vectors)[1:2, 1:2]
 
 ## Principal Component Analysis
 
-Eigenanalysis is a core component of principal component analysis. In it's simplest form, the principal components are the same as the eigenvectors. Let us derive some new traits along the eigenvectors of $\textbf{C}$.
+Eigenanalysis is closely related to principal component analysis. In its simplest form, the principal components are the same as the eigenvectors. Let us derive some new traits along the eigenvectors of $\textbf{C}$.
 
 ```{r}
 dim(as.matrix(X))
@@ -159,7 +159,7 @@ c(var(X[,1]), var(X[,2]), var(X[,3]))
 c(var(t1), var(t2), var(t3))
 ```
 
-Notice that the variances of new traits decreases from the first to the third trait, which was not the case for the original traits. However, the total variance stays the same (because we have just reorganized the variation).
+Notice that the variances of the new traits decreases from the first to the third trait, which was not the case for the original traits. However, the total variance stays the same (because we have just reorganized the variation).
 
 ```{r}
 var(t1) + var(t2) + var(t3)
@@ -199,7 +199,7 @@ biplot(pca, col=c("grey", "black"), cex=c(.5, 1))
 
 ## Data exercise: principal component analysis
 
-Choose any dataset comprosing three or more continuous variables (for example the *blossoms* data or the *alpine plants* data). Perform a principal component analysis and produce a biplot. Interpret the results in terms of which biological entitites are represented by each principal component.
+Choose any dataset comprosing three or more continuous variables (for example the *blossoms* data or the *alpine plants* data). Perform a principal component analysis and produce a biplot. Interpret the results in terms of which biological entitites are represented by each principal component. You will want to think about how to treat the original data prior to analysis, e.g. by z-transforming or log-transforming the original variables to avoid more variable variables to dominate the resulting principal components. Think about what the chosen transformations or scalings mean for the interpretation. 
 
 
 ## Principal component regression
