@@ -29,7 +29,7 @@ plants = read.csv(file="datasets/alpineplants.csv")
 
 In its simplest form, a path analysis consists of a series of correlations combined with linear regressions fitted to standardized variables (zero mean, unit variance), thus obtaining *path coefficients*. Before going into technical aspects, a critical point is that before estimating any parameters, causal inference through path analysis or related methods requires formulating a graphical model in the form of a *directed graph* showing the assumed causal (and non-causal) relationships between a set of variables.
 
-As an example, we will consider two different models for how snow depth, minimum winter soil temperature and growing-season soil moisture affect the distribution and abundance of *Carex bigelowii*. In the first model, we will assume independent effects of each predictor, thus building a path model on the form
+As an example, we will consider two different models for how snow depth, minimum winter soil temperature and growing-season soil moisture affect the distribution and abundance of the sedge *Carex bigelowii* (Cyperaceae). In the first model, we will assume independent effects of each predictor, thus building a path model on the form
 
 $$snow \rightarrow Carex.bigelowii$$
 $$min.T.winter \rightarrow Carex.bigelowii$$
@@ -43,7 +43,7 @@ $$min.T.winter \rightarrow Carex.bigelowii$$
 $$soil.moist \rightarrow Carex.bigelowii$$
 In path analysis, we call the response variables (with arrows coming into them) *endogeneous* variables, and the predictors (with arrows only going out of them) *exogeneous* variables.
 
-The first model can be fitted as a standard multiple regression, while the second model will involve fitting three different component models. Before fitting the models, we remove some `NA`s and *z*-transform all variables (including the response variables).
+The first model can be fitted as a standard multiple regression, while the second model will involve fitting three different component models. Before fitting the models, we remove some `NA`s and *z*-transform all variables (including the response variables). Removing `NA`s is important to make sure that our alternative models are fitted to exactly the same observations, and the *z*-transformation places all variables on a variance-standardized scale that will yield the path coefficients.  
 
 ```{r}
 plants = na.omit(plants)
@@ -104,7 +104,7 @@ summary(m2)
 plot(m2)
 ```
 
-Beyond simply fitting the component models, the `piecewiseSEM` package implements tests of so-called *directed separation* ("d-separation"), which is a test for conditional independence of variables. Here, the key test is if *Carex* abundance is really conditionally independent of snow cover, i.e. after we have accounted for winter soil temperature and growing-season soil moisture. The interpretation of these tests is different from what we are used to for normal models. In this case the null hypothesis is that our model represents the data well, and that adding an additional link (such as the one from snow cover directly to *Carex* abundance) would not improve the model sufficiently to be favoured. In this, a low p-value therefore indicates *bad* model fit, while a higher p-value indicate decent fit to the data. However, as always, we need to interpret any result in light of the parameter estimates.
+Beyond simply fitting the component models, the `piecewiseSEM` package implements tests of so-called *directed separation* ("d-separation"), which is a test for conditional independence of variables. Here, the key test is if *Carex* abundance is really conditionally independent of snow cover, i.e. after we have accounted for winter soil temperature and growing-season soil moisture. The interpretation of these tests is different from what we are used to for normal models. In this case the null hypothesis is that our model represents the data well, and that adding an additional link (such as the one from snow cover directly to *Carex* abundance) would not improve the model sufficiently to be favoured. Therefore, statistical support (a low p-value or support in AIC comparison) therefore indicates *bad* model fit, while lack of statistical support (e.g. a higher p-value) indicate decent fit to the data. However, as always, we need to interpret any result in light of the parameter estimates.
 
 Note that for a SEM containing multiple of these "independence claims", the `piecewiseSEM` package also provides a hypothesis test for the entire model, again with a high p-value indicating a decent fit to the data. This test is based on comparing the likelihood of the current model to a saturated model including the missing paths. The output of the current model includes a test of directed separation for the relationship between winter temperature and soil moisture, which was not our main interest in this case, and we would like to treat this as an untested correlation (corresponding to double-headed arrows in our traditional path analysis above). We can achieve this through the somewhat exotic `%~~%` operator within the `psem` function.
 
@@ -135,13 +135,13 @@ AIC(m2b, m3)
 
 The second model (`m3`) is favoured because it has the lowest AIC value. 
 
-The `piecewiceSEM` package allows the component models to be for example GLM´s or mixed models, and is thus very flexible. 
+One nice feature of the `piecewiceSEM` package is that is allows the component models to be for example GLM's or mixed models. This offers greater flexibility for including non-Gaussian variables, and for modelling structure in the data (e.g. non-independence of data points).  
 
 EXERCISE: Repeat the analyses above for *Thalictrum alpinum* instead of *Carex*. 
 
 EXERCISE: Can you think of other potential models that can be tested? Are there other important environmental variables? Start by drawing the competing models as directed graphs (on paper). Fit and compare the models, and interpret the results.
 
-```{r}
+```{r, include=F}
 m4 = psem(lm(min_T_winter~altitude + snow, data=plants),
           lm(mean_T_summer~altitude + snow, data=plants),
           lm(soil_moist~snow, data=plants),
