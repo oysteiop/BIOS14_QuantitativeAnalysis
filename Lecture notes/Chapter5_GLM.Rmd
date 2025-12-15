@@ -260,7 +260,7 @@ The distribution of count data can sometimes by normalized through a log-transfo
 ```{r}
 x = rnorm(200, 10, 3)
 eta = -2 + 0.2*x
-y = ceiling(exp(eta) + rpois(200, 0.3))
+y = rpois(200, exp(eta))
 
 par(mfrow=c(1,2))
 plot(x, eta, las=1)
@@ -306,7 +306,7 @@ We can quantify overdispersion in the data based on the fitted model by calculat
 set.seed(1)
 x = rnorm(200, 10, 3)
 eta = -2 + 0.2*x
-y = floor(exp(eta + rnbinom(200, 1, mu=.8)))
+y = rnbinom(200, 1, mu=exp(eta))
 
 par(mfrow=c(1,2))
 plot(x, eta, las=1)
