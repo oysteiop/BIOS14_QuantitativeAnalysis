@@ -448,6 +448,72 @@ abline(h=exp(coefs[1,1]), lty=2)
 abline(h=exp(coefs[1,1] + coefs[3,1]), lty=2)
 ```
 
+### Extended analysis for example report
+
+```{r}
+dat$MAT = dat$MAT/10
+dat$mcMAP = dat$MAP - mean(dat$MAP, na.rm=T)
+dat$mcMAT = dat$MAT - mean(dat$MAT, na.rm=T)
+dat$mceffort = dat$effort - mean(dat$effort, na.rm=T)
+
+m0 = glm.nb(Eulaema_nigrita ~ mceffort, data = dat)
+m = glm.nb(Eulaema_nigrita ~ lu_het + mceffort + mcMAT + mcMAP, data = dat)
+AIC(m0, m)
+summary(m)
+1- m$deviance/m$null.deviance
+
+mean(dat$MAP)
+sd(dat$MAP)
+exp(4.0802024)
+exp(4.0802024-0.0015347*sd(dat$MAP))
+
+```
+
+
+```{r, fig.height=4.5, fig.width=4.5, fig.cap="Variation in Eulaema nigrita abundance along a gradient in land-use heterogeneity, where 0 represents an entirely homogeneous landscape. Regression lines illustrate the effect when mean annual precipitation is at its mean, one SD below the mean, and one SD above the mean"}
+
+plot(dat$lu_het, dat$Eulaema_nigrita, col="grey", las=1,
+     xlab="Land-use heterogeneity",
+     ylab=expression(paste(italic("El. nigrita")," abundance")))
+
+newlu_het = seq(min(dat$lu_het), max(dat$lu_het), length.out=200)
+newMAP = rep(mean(dat$mcMAP), length(newlu_het))
+newMAT = rep(mean(dat$mcMAT), length(newlu_het))
+neweffort = rep(mean(dat$mceffort), length(newlu_het))
+
+y_hat = predict(m, newdata=list(mcMAP=newMAP,
+                                mcMAT=newMAT,
+                                mceffort=neweffort,
+                                lu_het=newlu_het), 
+                type="response")
+lines(newlu_het, y_hat, lwd=2)
+
+newMAP2 = rep(mean(dat$mcMAP)+sd(dat$mcMAP), length(newlu_het))
+y_hat2 = predict(m, newdata=list(mcMAP=newMAP2, 
+                                mcMAT=newMAT,
+                                mceffort=neweffort,
+                                lu_het=newlu_het), 
+                type="response")
+
+newMAP3 = rep(mean(dat$mcMAP)-sd(dat$mcMAP), length(newlu_het))
+y_hat3 = predict(m, newdata=list(mcMAP=newMAP3, 
+                                mcMAT=newMAT,
+                                mceffort=neweffort,
+                                lu_het=newlu_het), 
+                type="response")
+
+lines(newlu_het, y_hat2, lwd=2, col="blue3")
+lines(newlu_het, y_hat3, lwd=2, col="firebrick")
+
+legend("topleft", lty=1, lwd=2, col=c(1, "blue3", "firebrick"), bty="n", 
+       legend=c("MAP = Mean",
+                "MAP = Mean + SD",
+                "MAP = Mean - SD"))
+
+#abline(h=exp(coefs[1,1]), lty=2)
+#abline(h=exp(coefs[1,1] + coefs[3,1]), lty=2)
+```
+
 
 ## Hurdle models
 
