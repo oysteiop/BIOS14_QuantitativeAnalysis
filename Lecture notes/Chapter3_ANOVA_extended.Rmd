@@ -163,7 +163,6 @@ means
 ses = tapply(dat$DevelopmentTime, 
        list(dat$MaternalHost, dat$LarvalHost), 
        function(x) sd(x)/sqrt(sum(!is.na(x))))
-ses
 
 plot(c(0.97, 1.03), means[,1], ylim=c(18, 40), xlim=c(0.8, 2.2),
      xlab="Larval host", 
